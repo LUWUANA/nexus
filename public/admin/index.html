@@ -14,32 +14,21 @@
 }
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:40px 20px;}
 h2.sr-only{position:absolute;left:-9999px}
-
 .container{max-width:760px;margin:0 auto;}
-
 header{text-align:center;margin-bottom:40px;}
 header .logo{font-size:2rem;font-weight:700;color:var(--neon);letter-spacing:-.02em;}
 header .logo span{color:var(--muted);font-weight:400;}
 header p{color:var(--muted);font-size:.95rem;margin-top:6px;}
-
 .card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:20px;}
 .card h3{font-size:1rem;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
 .card h3 .badge{font-size:.7rem;background:rgba(110,87,255,.2);color:var(--neon);padding:2px 8px;border-radius:20px;font-weight:500;}
-
 label{display:block;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px;}
-input,textarea,select{
-  width:100%;background:var(--bg-input);border:1.5px solid transparent;
-  border-radius:var(--radius);color:var(--text);font-family:inherit;font-size:.95rem;
-  padding:12px 14px;outline:none;transition:border-color .2s;
-}
+input,textarea,select{width:100%;background:var(--bg-input);border:1.5px solid transparent;border-radius:var(--radius);color:var(--text);font-family:inherit;font-size:.95rem;padding:12px 14px;outline:none;transition:border-color .2s;}
 input:focus,textarea:focus,select:focus{border-color:var(--violet);}
 textarea{resize:vertical;min-height:100px;line-height:1.5;}
 input::placeholder,textarea::placeholder{color:var(--muted);}
-
 .field{margin-bottom:18px;}
-
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-
 .btn{padding:12px 20px;border-radius:var(--radius);border:none;font-family:inherit;font-size:.95rem;font-weight:700;cursor:pointer;transition:.2s;display:inline-flex;align-items:center;gap:8px;}
 .btn-primary{background:var(--violet);color:#fff;width:100%;justify-content:center;}
 .btn-primary:hover{background:var(--violet-2);}
@@ -47,8 +36,6 @@ input::placeholder,textarea::placeholder{color:var(--muted);}
 .btn-sm{padding:7px 14px;font-size:.82rem;}
 .btn-ghost{background:rgba(255,255,255,.06);color:var(--text);}
 .btn-ghost:hover{background:rgba(255,255,255,.1);}
-
-/* Pipeline */
 .pipeline{display:flex;align-items:center;gap:0;margin-bottom:28px;overflow-x:auto;}
 .step{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;position:relative;}
 .step:not(:last-child)::after{content:'';position:absolute;top:18px;left:50%;width:100%;height:2px;background:var(--border);z-index:0;}
@@ -58,15 +45,11 @@ input::placeholder,textarea::placeholder{color:var(--muted);}
 .step.error .step-dot{background:var(--red);border-color:var(--red);}
 .step-label{font-size:.72rem;color:var(--muted);text-align:center;white-space:nowrap;}
 .step.active .step-label{color:var(--text);}
-
-/* Logs */
 .log-box{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px;font-family:'DM Mono',monospace;font-size:.8rem;line-height:1.8;max-height:280px;overflow-y:auto;color:var(--muted);}
 .log-box .ok{color:var(--green);}
 .log-box .err{color:var(--red);}
 .log-box .info{color:var(--violet);}
 .log-box .warn{color:var(--amber);}
-
-/* PR preview */
 .pr-preview{display:none;}
 .pr-preview.show{display:block;}
 .pr-header{display:flex;align-items:center;gap:12px;padding:16px;background:rgba(110,87,255,.1);border-radius:var(--radius);border:1px solid rgba(110,87,255,.3);margin-bottom:16px;}
@@ -76,67 +59,58 @@ input::placeholder,textarea::placeholder{color:var(--muted);}
 .files-list{display:flex;flex-direction:column;gap:8px;}
 .file-tag{background:var(--bg-input);border-radius:6px;padding:8px 12px;font-family:'DM Mono',monospace;font-size:.8rem;display:flex;align-items:center;gap:8px;}
 .file-tag .dot{width:8px;height:8px;border-radius:50%;background:var(--amber);flex-shrink:0;}
-
 .pr-link{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;background:rgba(35,165,90,.1);border:1px solid rgba(35,165,90,.3);border-radius:var(--radius);color:var(--green);font-weight:700;text-decoration:none;margin-top:16px;}
 .pr-link:hover{background:rgba(35,165,90,.2);}
-
-/* Suggestions */
 .suggestions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
 .sug{background:var(--bg-input);border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:.82rem;cursor:pointer;color:var(--muted);transition:.2s;}
 .sug:hover{border-color:var(--violet);color:var(--text);}
-
 .tag{font-size:.72rem;padding:2px 8px;border-radius:10px;font-weight:600;}
 .tag-warn{background:rgba(240,177,50,.15);color:var(--amber);}
 </style>
 </head>
 <body>
 <h2 class="sr-only">NEXUS AI Updater — Générateur de Pull Requests par IA</h2>
-
 <div class="container">
 
 <header>
   <div class="logo">✦ NEXUS <span>AI Updater</span></div>
-  <p>Décris une amélioration → l'IA génère le code → une PR est créée sur GitHub</p>
+  <p>Décris une amélioration → Mistral génère le code → une PR est créée sur GitHub</p>
 </header>
 
-<!-- Pipeline -->
 <div class="pipeline" id="pipeline">
   <div class="step active" id="s1"><div class="step-dot">📝</div><div class="step-label">Demande</div></div>
-  <div class="step" id="s2"><div class="step-dot">🧠</div><div class="step-label">Claude génère</div></div>
+  <div class="step" id="s2"><div class="step-dot">🧠</div><div class="step-label">Mistral génère</div></div>
   <div class="step" id="s3"><div class="step-dot">🌿</div><div class="step-label">Branche créée</div></div>
   <div class="step" id="s4"><div class="step-dot">📤</div><div class="step-label">Commit</div></div>
   <div class="step" id="s5"><div class="step-dot">🔀</div><div class="step-label">PR ouverte</div></div>
 </div>
 
-<!-- Config -->
 <div class="card">
   <h3>🔑 Configuration <span class="badge tag-warn">Stocké localement</span></h3>
   <div class="grid-2">
     <div class="field">
-      <label>Clé API Anthropic</label>
-      <input type="password" id="anthropic-key" placeholder="sk-ant-..." value="">
+      <label>Clé API Mistral</label>
+      <input type="password" id="mistral-key" placeholder="Mistral API key...">
     </div>
     <div class="field">
       <label>Token GitHub</label>
-      <input type="password" id="github-token" placeholder="ghp_..." value="">
+      <input type="password" id="github-token" placeholder="ghp_...">
     </div>
   </div>
   <div class="field">
     <label>Repo GitHub (user/repo)</label>
-    <input type="text" id="github-repo" placeholder="tonuser/nexus">
+    <input type="text" id="github-repo" placeholder="LUWUANA/nexus">
   </div>
   <button class="btn btn-ghost btn-sm" onclick="saveConfig()">💾 Sauvegarder</button>
   <span id="config-saved" style="font-size:.8rem;color:var(--green);margin-left:10px;opacity:0;transition:.3s;"></span>
 </div>
 
-<!-- Demande -->
 <div class="card">
   <h3>📝 Ta demande</h3>
   <div class="field">
     <label>Décris la fonctionnalité ou le fix</label>
     <textarea id="request" placeholder="Ex: Ajoute un système de réactions emoji aux messages (👍 ❤️ 🎉). Le compteur doit s'afficher sous le message et se mettre à jour en temps réel via Socket.io."></textarea>
   </div>
-
   <div style="margin-bottom:18px;">
     <label>Suggestions rapides</label>
     <div class="suggestions">
@@ -144,23 +118,17 @@ input::placeholder,textarea::placeholder{color:var(--muted);}
       <div class="sug" onclick="setRequest(this)">Système de mentions @pseudo</div>
       <div class="sug" onclick="setRequest(this)">Indicateur "est en train d'écrire..."</div>
       <div class="sug" onclick="setRequest(this)">Éditer et supprimer ses messages</div>
-      <div class="sug" onclick="setRequest(this)">Migrer la DB de SQLite vers PostgreSQL</div>
       <div class="sug" onclick="setRequest(this)">Ajouter un système de rôles (admin, modérateur, membre)</div>
     </div>
   </div>
-
-  <button class="btn btn-primary" id="run-btn" onclick="runUpdater()">
-    🚀 Générer la Pull Request
-  </button>
+  <button class="btn btn-primary" id="run-btn" onclick="runUpdater()">🚀 Générer la Pull Request</button>
 </div>
 
-<!-- Logs -->
 <div class="card" id="log-card" style="display:none;">
   <h3>📡 Progression</h3>
   <div class="log-box" id="log-box"></div>
 </div>
 
-<!-- PR Preview -->
 <div class="card pr-preview" id="pr-preview">
   <h3>🔀 Pull Request créée</h3>
   <div class="pr-header">
@@ -181,13 +149,13 @@ input::placeholder,textarea::placeholder{color:var(--muted);}
 const CODEBASE_FILES = ['server.js','db.js','public/index.html','package.json'];
 
 function loadConfig(){
-  document.getElementById('anthropic-key').value = localStorage.getItem('nx_akey')||'';
-  document.getElementById('github-token').value  = localStorage.getItem('nx_gtoken')||'';
-  document.getElementById('github-repo').value   = localStorage.getItem('nx_grepo')||'';
+  document.getElementById('mistral-key').value  = localStorage.getItem('nx_mkey')||'';
+  document.getElementById('github-token').value = localStorage.getItem('nx_gtoken')||'';
+  document.getElementById('github-repo').value  = localStorage.getItem('nx_grepo')||'LUWUANA/nexus';
 }
 
 function saveConfig(){
-  localStorage.setItem('nx_akey',   document.getElementById('anthropic-key').value);
+  localStorage.setItem('nx_mkey',   document.getElementById('mistral-key').value);
   localStorage.setItem('nx_gtoken', document.getElementById('github-token').value);
   localStorage.setItem('nx_grepo',  document.getElementById('github-repo').value);
   const el = document.getElementById('config-saved');
@@ -229,7 +197,7 @@ async function githubReq(token, repo, method, path, body){
 }
 
 async function runUpdater(){
-  const apiKey  = document.getElementById('anthropic-key').value.trim();
+  const apiKey  = document.getElementById('mistral-key').value.trim();
   const ghToken = document.getElementById('github-token').value.trim();
   const ghRepo  = document.getElementById('github-repo').value.trim();
   const request = document.getElementById('request').value.trim();
@@ -245,7 +213,7 @@ async function runUpdater(){
   document.getElementById('pr-preview').classList.remove('show');
 
   try {
-    // ── Step 1 : Lire le codebase depuis GitHub ────────────────────────────
+    // ── Step 1 : Lire le codebase depuis GitHub ───────────────────────────
     setStep(1);
     log('Lecture du codebase depuis GitHub...');
     const codeContext = [];
@@ -260,9 +228,9 @@ async function runUpdater(){
       }catch(e){ log(`  ⚠ ${file} ignoré`, 'warn'); }
     }
 
-    // ── Step 2 : Claude génère le code ────────────────────────────────────
+    // ── Step 2 : Mistral génère le code ──────────────────────────────────
     setStep(2);
-    log('Appel Claude API...', 'info');
+    log('Appel Mistral API...', 'info');
 
     const systemPrompt = `Tu es un expert Node.js/Express/Socket.io qui maintient NEXUS, un clone Discord open-source inclusif.
 Tu reçois une demande de modification et le code source complet.
@@ -270,32 +238,33 @@ Tu réponds UNIQUEMENT avec un objet JSON valide (pas de markdown, pas d'explica
 {"branch_name":"feature/nom-kebab","pr_title":"feat: titre","pr_body":"## Description\\n...","files":{"server.js":"contenu complet"},"commit_message":"feat: ..."}
 N'inclus dans files QUE les fichiers modifiés, avec leur contenu COMPLET. Respecte l'architecture existante.`;
 
-    const aiRes = await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{
-        'x-api-key': apiKey,
-        'anthropic-version':'2023-06-01',
-        'Content-Type':'application/json',
-        'anthropic-dangerous-direct-browser-access':'true',
+    const aiRes = await fetch('https://api.mistral.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:8192,
-        system: systemPrompt,
-        messages:[{role:'user', content:`Codebase actuel :\n\n${codeContext.join('\n\n')}\n\n---\n\nDemande : ${request}`}],
+        model: 'mistral-large-latest',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `Codebase actuel :\n\n${codeContext.join('\n\n')}\n\n---\n\nDemande : ${request}` }
+        ],
+        max_tokens: 8192,
+        temperature: 0.1,
       }),
     });
 
-    if(!aiRes.ok){ throw new Error(`Claude API ${aiRes.status}`); }
+    if(!aiRes.ok){ throw new Error(`Mistral API ${aiRes.status} : ${await aiRes.text()}`); }
     const aiData = await aiRes.json();
-    const raw = aiData.content[0].text.trim();
+    const raw = aiData.choices[0].message.content.trim();
 
     let changes;
     try{ changes = JSON.parse(raw); }
     catch(e){
       const match = raw.match(/\{[\s\S]*\}/);
       if(match) changes = JSON.parse(match[0]);
-      else throw new Error('Réponse Claude non parseable');
+      else throw new Error('Réponse Mistral non parseable');
     }
 
     log(`Branche : ${changes.branch_name}`, 'ok');
@@ -338,7 +307,7 @@ N'inclus dans files QUE les fichiers modifiés, avec leur contenu COMPLET. Respe
     log('Création de la Pull Request...', 'info');
     const prRes = await githubReq(ghToken, ghRepo, 'POST', '/pulls', {
       title: changes.pr_title,
-      body:  changes.pr_body + `\n\n---\n*🤖 Généré par NEXUS AI Updater — "${request}"*`,
+      body:  changes.pr_body + `\n\n---\n*🤖 Généré par NEXUS AI Updater (Mistral) — "${request}"*`,
       head:  changes.branch_name,
       base:  'main',
     });
@@ -348,7 +317,6 @@ N'inclus dans files QUE les fichiers modifiés, avec leur contenu COMPLET. Respe
     log('✅ Pull Request créée !', 'ok');
     log(prRes.body.html_url, 'info');
 
-    // ── Afficher la preview ───────────────────────────────────────────────
     document.getElementById('pr-title').textContent  = changes.pr_title;
     document.getElementById('pr-branch').textContent = `branche : ${changes.branch_name}`;
     const fl = document.getElementById('files-list');
