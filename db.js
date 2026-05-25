@@ -15,7 +15,7 @@ const db = new Database(DB_PATH);
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
-// ————————— Schéma ————————————————————————————————————————————————————————————————————————
+// ————————————————— Schéma ——————————————————————————————————————————————————————————————————————————————
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
     id        INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -54,6 +54,15 @@ db.exec(`
     created_at TEXT    NOT NULL DEFAULT (datetime('now'))
   );
 
+  CREATE TABLE IF NOT EXISTS private_messages (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    sender_id   INTEGER NOT NULL REFERENCES users(id),
+    receiver_id INTEGER NOT NULL REFERENCES users(id),
+    content     TEXT    NOT NULL,
+    created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(sender_id, receiver_id, created_at)
+  );
+
   CREATE TABLE IF NOT EXISTS server_members (
     server_id  INTEGER NOT NULL REFERENCES servers(id) ON DELETE CASCADE,
     user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -71,7 +80,7 @@ db.exec(`
   );
 `);
 
-// ————————— Seed : serveur par défaut ———————————————————————————————————————————————————————
+// ————————————————— Seed : serveur par défaut ———————————————————————————————————————————————————————
 const seedServer = db.prepare(`SELECT id FROM servers WHERE slug = 'nexus-core'`).get();
 if (!seedServer) {
   // Créer un user système pour posséder le serveur par défaut
@@ -96,7 +105,7 @@ if (!seedServer) {
   console.log('✅ Serveur par défaut créé');
 }
 
-// ————————— Requêtes préparées —————————————————————————————————————————————————————————————
+// ————————————————— Requêtes préparées —————————————————————————————————————————————————————————————————————
 module.exports = {
   db,
 
@@ -135,6 +144,22 @@ module.exports = {
   `),
   createMessage: db.prepare(`
     INSERT INTO messages (channel_id, user_id, content) VALUES (?, ?, ?)
+  `),
+
+  // Private Messages
+  createPrivateMessage: db.prepare(`
+    INSERT INTO private_messages (sender_id, receiver_id, content) VALUES (?, ?, ?)
+  `),
+  getPrivateMessages: db.prepare(`
+    SELECT pm.id, pm.content, pm.created_at,
+           s.username as sender_username, s.pronouns as sender_pronouns, s.avatar as sender_avatar,
+           r.username as receiver_username, r.pronouns as receiver_pronouns, r.avatar as receiver_avatar
+    FROM private_messages pm
+    JOIN users s ON s.id = pm.sender_id
+    JOIN users r ON r.id = pm.receiver_id
+    WHERE (pm.sender_id = ? AND pm.receiver_id = ?) OR (pm.sender_id = ? AND pm.receiver_id = ?)
+    ORDER BY pm.id DESC
+    LIMIT 50
   `),
 
   // Members
