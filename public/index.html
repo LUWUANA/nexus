@@ -34,7 +34,7 @@
       overflow: hidden;
     }
 
-    /* ——— Auth ————————————————————————————————————————————————————————————————————————————— */
+    /* ——— Auth ———————————————————————————————————————————————————————————————————————————————————————— */
     #auth-screen {
       position: fixed; inset: 0;
       background: var(--bg);
@@ -80,7 +80,7 @@
 
     #auth-error { color: var(--red); font-size: .85rem; text-align: center; margin-top: 12px; min-height: 20px; }
 
-    /* ——— App ——————————————————————————————————————————————————————————————————————————————— */
+    /* ——— App ————————————————————————————————————————————————————————————————————————————————————————— */
     #app { display: none; grid-template-columns: 72px 240px 1fr; height: 100vh; }
     #app.visible { display: grid; }
 
@@ -119,6 +119,14 @@
     .user-panel .info { flex: 1; min-width: 0; }
     .user-panel .info b { display: block; font-size: .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .user-panel .info small { font-size: .75rem; color: var(--text-muted); }
+    .user-panel .roles { display: flex; gap: 4px; margin-top: 2px; }
+    .user-panel .role-badge {
+      font-size: 0.65rem;
+      padding: 2px 6px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+    }
     .btn-icon { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; border-radius: 4px; font-size: 1rem; transition: color .2s; }
     .btn-icon:hover { color: var(--text); }
 
@@ -132,6 +140,13 @@
     .msg-group .meta { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
     .msg-group .meta b { color: var(--violet); font-size: .95rem; }
     .msg-group .meta .pronouns { font-size: .72rem; color: var(--text-muted); background: rgba(110,87,255,.15); padding: 1px 6px; border-radius: 10px; }
+    .msg-group .meta .role-badge {
+      font-size: 0.65rem;
+      padding: 2px 6px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+    }
     .msg-group .meta time { font-size: .75rem; color: var(--text-muted); }
     .msg-group p { line-height: 1.4; word-break: break-word; }
     .msg-continued { padding: 1px 0 1px 56px; }
@@ -177,6 +192,102 @@
 
     #toast { position: fixed; bottom: 24px; right: 24px; background: var(--bg-side); color: var(--text); padding: 12px 20px; border-radius: var(--radius); border-left: 3px solid var(--violet); font-size: .9rem; opacity: 0; transition: opacity .3s; z-index: 999; pointer-events: none; }
     #toast.show { opacity: 1; }
+
+    /* Role management modal */
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .modal.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .modal-content {
+      background: var(--bg-side);
+      border-radius: 12px;
+      padding: 24px;
+      width: 500px;
+      max-width: 90vw;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .modal-header h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    .role-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .role-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      background: var(--bg-input);
+      border-radius: 8px;
+    }
+    .role-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .role-color {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #99AAB5;
+    }
+    .role-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .btn-small {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      border: none;
+    }
+    .btn-edit {
+      background: var(--violet);
+      color: white;
+    }
+    .btn-delete {
+      background: var(--red);
+      color: white;
+    }
+    .btn-create {
+      background: var(--violet);
+      color: white;
+      padding: 10px 16px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      margin-top: 16px;
+    }
   </style>
 </head>
 <body>
@@ -238,8 +349,10 @@
       <div class="info">
         <b id="my-name">...</b>
         <small id="my-pronouns"></small>
+        <div class="roles" id="my-roles"></div>
       </div>
       <button class="btn-icon" onclick="doLogout()" title="Se déconnecter">⏏</button>
+      <button class="btn-icon" onclick="openRoleManagement()" title="Gérer les rôles">⚙️</button>
     </div>
   </div>
 
@@ -268,6 +381,18 @@
   </div>
 </div>
 
+<!-- Role Management Modal -->
+<div class="modal" id="role-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Gérer les rôles</h2>
+      <button class="modal-close" onclick="closeRoleManagement()">×</button>
+    </div>
+    <div class="role-list" id="role-list"></div>
+    <button class="btn-create" onclick="createRole()">Créer un rôle</button>
+  </div>
+</div>
+
 <div id="toast"></div>
 <audio id="snd-in" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3" preload="auto"></audio>
 
@@ -275,6 +400,7 @@
 let currentUser = null, currentChannel = null, lastMsgUser = null, typingTimeout = null;
 const socket = io();
 const typingUsers = new Map();
+let currentServerId = null;
 
 function switchTab(tab) {
   document.querySelectorAll('.auth-tab').forEach((t, i) => t.classList.toggle('active', (i===0)===(tab==='login')));
@@ -328,9 +454,37 @@ async function loadServers() {
   const servers = await res.json();
   if (!servers.length) return;
   const srv = servers[0];
+  currentServerId = srv.id;
   renderChannels(srv.channels);
   const firstText = srv.channels.find(c => c.type === 'text');
   if (firstText) joinChannel(firstText);
+  
+  // Join server room for role updates
+  socket.emit('join-server', { serverId: srv.id });
+  
+  // Load user roles
+  await loadUserRoles();
+}
+
+async function loadUserRoles() {
+  const res = await fetch(`/api/servers/${currentServerId}/members`);
+  const members = await res.json();
+  const me = members.find(m => m.id === currentUser.id);
+  if (me && me.roles) {
+    renderUserRoles(JSON.parse(me.roles));
+  }
+}
+
+function renderUserRoles(roles) {
+  const container = document.getElementById('my-roles');
+  container.innerHTML = '';
+  roles.forEach(role => {
+    const badge = document.createElement('span');
+    badge.className = 'role-badge';
+    badge.textContent = role.name;
+    badge.style.backgroundColor = role.color;
+    container.appendChild(badge);
+  });
 }
 
 function renderChannels(channels) {
@@ -395,6 +549,28 @@ socket.on('user-stop-typing', ({ userId }) => {
   updateTypingIndicator();
 });
 
+socket.on('role-created', (role) => {
+  if (role.server_id === currentServerId) {
+    loadUserRoles();
+  }
+});
+
+socket.on('role-updated', (role) => {
+  if (role.server_id === currentServerId) {
+    loadUserRoles();
+  }
+});
+
+socket.on('role-deleted', ({ id }) => {
+  loadUserRoles();
+});
+
+socket.on('member-roles-updated', (member) => {
+  if (member.id === currentUser.id) {
+    renderUserRoles(JSON.parse(member.roles));
+  }
+});
+
 function updateTypingIndicator() {
   const indicator = document.getElementById('typing-indicator');
   if (typingUsers.size === 0) {
@@ -410,6 +586,8 @@ function updateTypingIndicator() {
 
 function renderMsg(msg) {
   const area = document.getElementById('chat-area');
+  const roles = msg.roles ? JSON.parse(msg.roles) : [];
+  
   if (msg.username === lastMsgUser) {
     const div = document.createElement('div');
     div.className = 'msg-continued';
@@ -419,11 +597,18 @@ function renderMsg(msg) {
     const time = new Date(msg.created_at).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
     const div  = document.createElement('div');
     div.className = 'msg-group';
+    
+    let roleBadges = '';
+    roles.forEach(role => {
+      roleBadges += `<span class="role-badge" style="background-color: ${role.color}">${escHtml(role.name)}</span>`;
+    });
+    
     div.innerHTML = `
       <img class="ava" src="${msg.avatar}" alt="${escHtml(msg.username)}">
       <div class="body">
         <div class="meta">
           <b>${escHtml(msg.username)}</b>
+          ${roleBadges}
           <span class="pronouns">${escHtml(msg.pronouns)}</span>
           <time>${time}</time>
         </div>
@@ -460,6 +645,91 @@ function toast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function openRoleManagement() {
+  if (!currentServerId) return toast('Serveur non chargé');
+  
+  fetch(`/api/servers/${currentServerId}/roles`, {
+    headers: { 'X-Socket-Id': socket.id }
+  })
+  .then(res => res.json())
+  .then(roles => {
+    const roleList = document.getElementById('role-list');
+    roleList.innerHTML = '';
+    
+    roles.forEach(role => {
+      const roleItem = document.createElement('div');
+      roleItem.className = 'role-item';
+      roleItem.innerHTML = `
+        <div class="role-info">
+          <div class="role-color" style="background-color: ${role.color}"></div>
+          <span>${escHtml(role.name)}</span>
+        </div>
+        <div class="role-actions">
+          <button class="btn-small btn-edit" onclick="editRole(${role.id})">Modifier</button>
+          <button class="btn-small btn-delete" onclick="deleteRole(${role.id})">Supprimer</button>
+        </div>
+      `;
+      roleList.appendChild(roleItem);
+    });
+    
+    document.getElementById('role-modal').classList.add('visible');
+  })
+  .catch(err => toast('Erreur lors du chargement des rôles'));
+}
+
+function closeRoleManagement() {
+  document.getElementById('role-modal').classList.remove('visible');
+}
+
+function createRole() {
+  const name = prompt('Nom du rôle:');
+  if (!name) return;
+  
+  const color = prompt('Couleur du rôle (hex, ex: #FF0000):', '#99AAB5');
+  if (!color) return;
+  
+  fetch(`/api/servers/${currentServerId}/roles`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Socket-Id': socket.id
+    },
+    body: JSON.stringify({
+      name,
+      color,
+      permissions: []
+    })
+  })
+  .then(res => res.json())
+  .then(role => {
+    toast(`Rôle ${role.name} créé`);
+    closeRoleManagement();
+  })
+  .catch(err => toast('Erreur lors de la création du rôle'));
+}
+
+function editRole(roleId) {
+  toast('Modification de rôle bientôt disponible');
+}
+
+function deleteRole(roleId) {
+  if (!confirm('Supprimer ce rôle ?')) return;
+  
+  fetch(`/api/roles/${roleId}`, {
+    method: 'DELETE',
+    headers: { 'X-Socket-Id': socket.id }
+  })
+  .then(res => {
+    if (res.ok) {
+      toast('Rôle supprimé');
+      closeRoleManagement();
+    } else {
+      toast('Erreur lors de la suppression du rôle');
+    }
+  })
+  .catch(err => toast('Erreur lors de la suppression du rôle'));
 }
 
 // Auto-login

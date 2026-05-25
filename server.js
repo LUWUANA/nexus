@@ -15,6 +15,10 @@ const {
   getServers, getChannelsByServer, getChannelById,
   getMessages, createMessage,
   joinServer,
+  // New role-related functions
+  getRolesByServer, getUserRoles, createRole, updateRole,
+  deleteRole, assignRole, removeRole, getRoleById,
+  getServerMembersWithRoles, getUserPermissions
 } = require('./db');
 
 const app    = express();
@@ -27,10 +31,10 @@ const JWT_SECRET = process.env.JWT_SECRET || 'nexus-dev-secret-CHANGE-ME';
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static('public'));
 
-// ——— Map : socketId → userId ————————————————————————————————————————————————————————————————
+// ——— Map : socketId → userId ————————————————————————————————————————————————————————————————————————
 const sessions = new Map();
 
-// ——— Helper JWT ————————————————————————————————————————————————————————————————————————
+// ——— Helper JWT ———————————————————————————————————————————————————————————————————————————————————————
 function signToken(userId) {
   return jwt.sign({ sub: userId }, JWT_SECRET, { expiresIn: '7d' });
 }
@@ -40,7 +44,14 @@ function verifyToken(token) {
   catch { return null; }
 }
 
-// ——— REST : Auth ————————————————————————————————————————————————————————————————————————
+// ——— Helper: Check permissions ————————————————————————————————————————————————————————————————
+function hasPermission(session, serverId, permission) {
+  if (!session) return false;
+  const permissions = getUserPermissions.get(session.userId, serverId);
+  return permissions.includes(permission);
+}
+
+// ——— REST : Auth —————————————————————————————————————————————————————————————————————————————————————
 
 app.post('/api/register', (req, res) => {
   const { username, password, pronouns } = req.body;
@@ -61,7 +72,14 @@ app.post('/api/register', (req, res) => {
   }
 
   const coreServer = db.prepare(`SELECT id FROM servers WHERE slug = 'nexus-core'`).get();
-  if (coreServer) joinServer.run(coreServer.id, result.lastInsertRowid);
+  if (coreServer) {
+    joinServer.run(coreServer.id, result.lastInsertRowid);
+    // Assign default member role
+    const memberRole = db.prepare(`SELECT id FROM roles WHERE server_id = ? AND name = 'Membre'`).get(coreServer.id);
+    if (memberRole) {
+      assignRole.run(memberRole.id, result.lastInsertRowid);
+    }
+  }
 
   const token = signToken(result.lastInsertRowid);
   const user  = getUserById.get(result.lastInsertRowid);
@@ -82,7 +100,7 @@ app.post('/api/login', (req, res) => {
   res.json({ token, user });
 });
 
-// ——— REST : Données —————————————————————————————————————————————————————————————————————
+// ——— REST : Data ———————————————————————————————————————————————————————————————————————————————————————
 
 app.get('/api/servers', (req, res) => {
   const servers = getServers.all();
@@ -98,9 +116,158 @@ app.get('/api/channels/:id/messages', (req, res) => {
   res.json(messages.reverse());
 });
 
-// ——— Proxy GitHub pour l'AI Updater ————————————————————————————————————————————————————————
-// Évite les problèmes CORS en passant par le serveur Node.js
+// ——— REST : Roles —————————————————————————————————————————————————————————————————————————————————————
 
+app.get('/api/servers/:serverId/roles', (req, res) => {
+  const { serverId } = req.params;
+  const session = sessions.get(req.headers['x-socket-id']);
+  if (!session) return res.status(401).json({ error: 'Non autorisé' });
+  
+  if (!hasPermission(session, serverId, 'manage_roles')) {
+    return res.status(403).json({ error: 'Permission refusée' });
+  }
+  
+  const roles = getRolesByServer.all(serverId);
+  res.json(roles);
+});
+
+app.post('/api/servers/:serverId/roles', (req, res) => {
+  const { serverId } = req.params;
+  const { name, color, permissions } = req.body;
+  const session = sessions.get(req.headers['x-socket-id']);
+  
+  if (!session) return res.status(401).json({ error: 'Non autorisé' });
+  if (!hasPermission(session, serverId, 'manage_roles')) {
+    return res.status(403).json({ error: 'Permission refusée' });
+  }
+  
+  try {
+    const result = createRole.run({
+      server_id: serverId,
+      name,
+      color: color || '#99AAB5',
+      permissions: JSON.stringify(permissions || []),
+      position: 0
+    });
+    const role = getRoleById.get(result.lastInsertRowid);
+    io.to(`server:${serverId}`).emit('role-created', role);
+    res.status(201).json(role);
+  } catch (e) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+app.put('/api/roles/:roleId', (req, res) => {
+  const { roleId } = req.params;
+  const { name, color, permissions, position } = req.body;
+  const session = sessions.get(req.headers['x-socket-id']);
+  
+  if (!session) return res.status(401).json({ error: 'Non autorisé' });
+  
+  const role = getRoleById.get(roleId);
+  if (!role) return res.status(404).json({ error: 'Rôle introuvable' });
+  
+  if (!hasPermission(session, role.server_id, 'manage_roles')) {
+    return res.status(403).json({ error: 'Permission refusée' });
+  }
+  
+  try {
+    updateRole.run({
+      id: roleId,
+      name: name || role.name,
+      color: color || role.color,
+      permissions: permissions ? JSON.stringify(permissions) : role.permissions,
+      position: position !== undefined ? position : role.position
+    });
+    const updatedRole = getRoleById.get(roleId);
+    io.to(`server:${role.server_id}`).emit('role-updated', updatedRole);
+    res.json(updatedRole);
+  } catch (e) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+app.delete('/api/roles/:roleId', (req, res) => {
+  const { roleId } = req.params;
+  const session = sessions.get(req.headers['x-socket-id']);
+  
+  if (!session) return res.status(401).json({ error: 'Non autorisé' });
+  
+  const role = getRoleById.get(roleId);
+  if (!role) return res.status(404).json({ error: 'Rôle introuvable' });
+  
+  if (!hasPermission(session, role.server_id, 'manage_roles')) {
+    return res.status(403).json({ error: 'Permission refusée' });
+  }
+  
+  try {
+    deleteRole.run(roleId);
+    io.to(`server:${role.server_id}`).emit('role-deleted', { id: roleId });
+    res.status(204).end();
+  } catch (e) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+app.post('/api/roles/:roleId/assign', (req, res) => {
+  const { roleId } = req.params;
+  const { userId } = req.body;
+  const session = sessions.get(req.headers['x-socket-id']);
+  
+  if (!session) return res.status(401).json({ error: 'Non autorisé' });
+  
+  const role = getRoleById.get(roleId);
+  if (!role) return res.status(404).json({ error: 'Rôle introuvable' });
+  
+  if (!hasPermission(session, role.server_id, 'manage_roles')) {
+    return res.status(403).json({ error: 'Permission refusée' });
+  }
+  
+  try {
+    assignRole.run(roleId, userId);
+    const member = getServerMembersWithRoles.get(role.server_id, userId);
+    io.to(`server:${role.server_id}`).emit('member-roles-updated', member);
+    res.json(member);
+  } catch (e) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+app.post('/api/roles/:roleId/remove', (req, res) => {
+  const { roleId } = req.params;
+  const { userId } = req.body;
+  const session = sessions.get(req.headers['x-socket-id']);
+  
+  if (!session) return res.status(401).json({ error: 'Non autorisé' });
+  
+  const role = getRoleById.get(roleId);
+  if (!role) return res.status(404).json({ error: 'Rôle introuvable' });
+  
+  if (!hasPermission(session, role.server_id, 'manage_roles')) {
+    return res.status(403).json({ error: 'Permission refusée' });
+  }
+  
+  try {
+    removeRole.run(roleId, userId);
+    const member = getServerMembersWithRoles.get(role.server_id, userId);
+    io.to(`server:${role.server_id}`).emit('member-roles-updated', member);
+    res.json(member);
+  } catch (e) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+app.get('/api/servers/:serverId/members', (req, res) => {
+  const { serverId } = req.params;
+  const session = sessions.get(req.headers['x-socket-id']);
+  
+  if (!session) return res.status(401).json({ error: 'Non autorisé' });
+  
+  const members = getServerMembersWithRoles.all(serverId);
+  res.json(members);
+});
+
+// ——— Proxy GitHub for AI Updater ————————————————————————————————————————————————————————————————
 app.post('/api/github-proxy', (req, res) => {
   const { method, path, body, token } = req.body;
 
@@ -138,7 +305,7 @@ app.post('/api/github-proxy', (req, res) => {
   proxyReq.end();
 });
 
-// ——— Socket.io —————————————————————————————————————————————————————————————————————————
+// ——— Socket.io ———————————————————————————————————————————————————————————————————————————————————————
 
 io.on('connection', (socket) => {
   console.log(`🔌 Connexion : ${socket.id}`);
@@ -156,6 +323,13 @@ io.on('connection', (socket) => {
     socket.emit('auth-success', user);
     io.emit('user-status', { userId: user.id, username: user.username, status: 'online' });
     console.log(`✅ Auth : ${user.username}`);
+  });
+
+  socket.on('join-server', ({ serverId }) => {
+    const session = sessions.get(socket.id);
+    if (!session) return;
+    
+    socket.join(`server:${serverId}`);
   });
 
   socket.on('join-channel', ({ channelId }) => {
@@ -206,6 +380,7 @@ io.on('connection', (socket) => {
 
     const result = createMessage.run(channelId, session.userId, content.trim());
     const user   = getUserById.get(session.userId);
+    const roles = getUserRoles.all(session.userId, channel.server_id);
 
     const msg = {
       id:         result.lastInsertRowid,
@@ -215,6 +390,7 @@ io.on('connection', (socket) => {
       username:   user.username,
       pronouns:   user.pronouns,
       avatar:     user.avatar,
+      roles
     };
 
     io.to(`channel:${channelId}`).emit('new-msg', msg);
@@ -235,7 +411,7 @@ io.on('connection', (socket) => {
   });
 });
 
-// ——— Démarrage ———————————————————————————————————————————————————————————————————————————
+// ——— Startup ———————————————————————————————————————————————————————————————————————————————————————
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 NEXUS V2 — port ${PORT}`);
