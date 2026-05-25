@@ -17,6 +17,7 @@
       --bg-tertiary: #2b2d3a;
       --bg-elevated: #313342;
       --bg-input: #383a4a;
+      --bg-message: #3a3c4e;
       --text-primary: #e0e0e6;
       --text-secondary: #a1a1b5;
       --text-accent: #a78bfa;
@@ -37,7 +38,7 @@
       overflow: hidden;
     }
 
-    /* ——— Auth ————————————————————————————————————————————————————————————————————— */
+    /* ——— Auth ————————————————————————————————————————————————————————————————— */
     #auth-screen {
       position: fixed; inset: 0;
       background: var(--bg-primary);
@@ -157,7 +158,7 @@
       min-height: 20px;
     }
 
-    /* ——— App ————————————————————————————————————————————————————————————————————— */
+    /* ——— App ————————————————————————————————————————————————————————————————— */
     #app {
       display: none;
       grid-template-columns: 80px 260px 1fr;
@@ -289,73 +290,64 @@
       color: var(--neon-accent);
     }
 
-    .user-panel {
-      background: var(--bg-secondary);
-      padding: 12px 14px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      border-top: 1px solid rgba(110, 87, 255, 0.1);
-    }
-
-    .user-panel .avatar {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      border: 2px solid var(--violet-primary);
-    }
-
-    .user-panel .info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .user-panel .info b {
-      display: block;
-      font-size: 0.95rem;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .user-panel .info small {
-      font-size: 0.75rem;
-      color: var(--text-secondary);
-    }
-
-    .btn-icon {
-      background: none;
-      border: none;
-      color: var(--text-secondary);
-      cursor: pointer;
-      padding: 6px;
-      border-radius: 4px;
-      font-size: 1.1rem;
-      transition: color 0.2s;
-    }
-
-    .btn-icon:hover {
-      color: var(--neon-accent);
-    }
-
     .chat {
       display: flex;
       flex-direction: column;
       background: var(--bg-elevated);
+      position: relative;
     }
 
     .chat-header {
-      padding: 16px 24px;
+      padding: 12px 24px;
       border-bottom: 1px solid rgba(110, 87, 255, 0.1);
       display: flex;
       align-items: center;
       gap: 12px;
       font-weight: 600;
       color: var(--neon-accent);
+      background: rgba(49, 51, 66, 0.5);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
 
     .chat-header .icon {
       font-size: 1.1rem;
+    }
+
+    .chat-profile {
+      position: absolute;
+      top: 12px;
+      right: 24px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .profile-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 2px solid var(--violet-primary);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .profile-avatar::after {
+      content: '';
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #10b981;
+      border: 2px solid var(--bg-elevated);
+    }
+
+    .profile-avatar.offline::after {
+      background: #6b7280;
     }
 
     #chat-area {
@@ -364,59 +356,49 @@
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 12px;
     }
 
-    .msg-group {
-      display: flex;
-      gap: 16px;
-      margin-top: 16px;
+    .message-bubble {
+      background: var(--bg-message);
+      padding: 14px 18px;
+      border-radius: var(--radius-md);
+      max-width: 70%;
+      word-break: break-word;
+      line-height: 1.5;
     }
 
-    .msg-group .ava {
-      width: 42px;
-      height: 42px;
-      border-radius: 50%;
-      flex-shrink: 0;
+    .message-bubble.sent {
+      align-self: flex-end;
+      background: var(--violet-primary);
+      border-bottom-right-radius: 4px;
     }
 
-    .msg-group .meta {
-      display: flex;
-      align-items: baseline;
-      gap: 8px;
-      margin-bottom: 6px;
+    .message-bubble.received {
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
     }
 
-    .msg-group .meta b {
+    .message-bubble .author {
+      font-weight: 600;
       color: var(--neon-accent);
-      font-size: 0.98rem;
+      margin-bottom: 4px;
+      font-size: 0.9rem;
     }
 
-    .msg-group .meta .pronouns {
-      font-size: 0.72rem;
+    .message-bubble .pronouns {
+      font-size: 0.7rem;
       color: var(--text-secondary);
       background: rgba(110, 87, 255, 0.15);
-      padding: 2px 8px;
-      border-radius: 12px;
+      padding: 2px 6px;
+      border-radius: 8px;
+      margin-left: 6px;
     }
 
-    .msg-group .meta time {
-      font-size: 0.75rem;
+    .message-bubble time {
+      font-size: 0.7rem;
       color: var(--text-secondary);
-    }
-
-    .msg-group p {
-      line-height: 1.5;
-      word-break: break-word;
-    }
-
-    .msg-continued {
-      padding: 2px 0 2px 58px;
-    }
-
-    .msg-continued:hover, .msg-group:hover {
-      background: rgba(110, 87, 255, 0.08);
-      border-radius: var(--radius-sm);
+      margin-left: 8px;
     }
 
     .typing-indicator {
@@ -592,20 +574,17 @@
   <div class="sidebar">
     <div class="sidebar-header">Nexus Core</div>
     <div class="channels-list" id="channels-list"></div>
-    <div class="user-panel">
-      <img id="my-avatar" class="avatar" src="" alt="">
-      <div class="info">
-        <b id="my-name">...</b>
-        <small id="my-pronouns"></small>
-      </div>
-      <button class="btn-icon" onclick="doLogout()" title="Se déconnecter">⏏</button>
-    </div>
   </div>
 
   <div class="chat">
     <div class="chat-header">
       <span class="icon">●</span>
       <span id="active-channel-name">général</span>
+      <div class="chat-profile">
+        <div class="profile-avatar" id="my-avatar-btn">
+          <img id="my-avatar" src="" alt="" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+        </div>
+      </div>
     </div>
     <div id="chat-area"></div>
     <div class="typing-indicator" id="typing-indicator">
@@ -674,9 +653,8 @@ async function startApp(user) {
   currentUser = user;
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('app').classList.add('visible');
-  document.getElementById('my-name').textContent     = user.username;
-  document.getElementById('my-pronouns').textContent = user.pronouns;
-  document.getElementById('my-avatar').src           = user.avatar;
+  document.getElementById('my-avatar').src = user.avatar;
+  document.getElementById('my-avatar-btn').classList.toggle('offline', user.status === 'offline');
   document.getElementById('snd-in').play().catch(()=>{});
   socket.emit('auth', { token: localStorage.getItem('nexus_token') });
   await loadServers();
@@ -739,8 +717,11 @@ socket.on('channel-history', ({ messages }) => {
 
 socket.on('new-msg', msg => { renderMsg(msg); scrollToBottom(); });
 
-socket.on('user-status', ({ username, status }) => {
-  toast(`${username} est ${status === 'online' ? 'en ligne 🟢' : 'hors ligne'}`);
+socket.on('user-status', ({ userId, status }) => {
+  if (userId === currentUser.id) {
+    document.getElementById('my-avatar-btn').classList.toggle('offline', status === 'offline');
+  }
+  toast(`${status === 'online' ? '🟢' : '⚪'} ${typingUsers.get(userId)?.username || 'Un utilisateur'} est ${status}`);
 });
 
 socket.on('user-typing', ({ userId, username, pronouns }) => {
@@ -769,28 +750,18 @@ function updateTypingIndicator() {
 
 function renderMsg(msg) {
   const area = document.getElementById('chat-area');
-  if (msg.username === lastMsgUser) {
-    const div = document.createElement('div');
-    div.className = 'msg-continued';
-    div.textContent = msg.content;
-    area.appendChild(div);
-  } else {
-    const time = new Date(msg.created_at).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
-    const div  = document.createElement('div');
-    div.className = 'msg-group';
-    div.innerHTML = `
-      <img class="ava" src="${msg.avatar}" alt="${escHtml(msg.username)}">
-      <div class="body">
-        <div class="meta">
-          <b>${escHtml(msg.username)}</b>
-          <span class="pronouns">${escHtml(msg.pronouns)}</span>
-          <time>${time}</time>
-        </div>
-        <p>${escHtml(msg.content)}</p>
-      </div>`;
-    area.appendChild(div);
-    lastMsgUser = msg.username;
-  }
+  const time = new Date(msg.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  const bubble = document.createElement('div');
+  bubble.className = `message-bubble ${msg.username === currentUser.username ? 'sent' : 'received'}`;
+  bubble.innerHTML = `
+    <div>
+      <span class="author">${escHtml(msg.username)}</span>
+      <span class="pronouns">${escHtml(msg.pronouns)}</span>
+      <time>${time}</time>
+    </div>
+    <p>${escHtml(msg.content)}</p>
+  `;
+  area.appendChild(bubble);
 }
 
 function escHtml(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
