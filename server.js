@@ -17,7 +17,8 @@ const {
   getChannelsByServer, getChannelById,
   getMessages, createMessage,
   joinServer, getServerMembers,
-  createInvite, getInviteByCode, getInvitesByServer
+  createInvite, getInviteByCode, getInvitesByServer,
+  createPrivateMessage, getPrivateMessages
 } = require('./db');
 
 const app    = express();
@@ -30,10 +31,11 @@ const JWT_SECRET = process.env.JWT_SECRET || 'nexus-dev-secret-CHANGE-ME';
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static('public'));
 
-// ——— Map : socketId → userId ————————————————————————————————————————————————————————————————
+// ——— Map : socketId → userId ————————————————————————————————————————————————————————————————————————
 const sessions = new Map();
+const connectedUsers = new Map(); // userId → { username, socketId }
 
-// ——— Helper JWT ————————————————————————————————————————————————————————————————————————
+// ——— Helper JWT ————————————————————————————————————————————————————————————————————————————————————————
 function signToken(userId) {
   return jwt.sign({ sub: userId }, JWT_SECRET, { expiresIn: '7d' });
 }
@@ -43,12 +45,12 @@ function verifyToken(token) {
   catch { return null; }
 }
 
-// ——— Helper Invite Code ————————————————————————————————————————————————————————————————
+// ——— Helper Invite Code ———————————————————————————————————————————————————————————————————————————————
 function generateInviteCode() {
   return crypto.randomBytes(4).toString('hex').toUpperCase();
 }
 
-// ——— REST : Auth ————————————————————————————————————————————————————————————————————————
+// ——— REST : Auth ———————————————————————————————————————————————————————————————————————————————————————
 
 app.post('/api/register', (req, res) => {
   const { username, password, pronouns } = req.body;
@@ -90,7 +92,7 @@ app.post('/api/login', (req, res) => {
   res.json({ token, user });
 });
 
-// ——— REST : Servers —————————————————————————————————————————————————————————————————————
+// ——— REST : Servers —————————————————————————————————————————————————————————————————————————————————————
 
 app.get('/api/servers', (req, res) => {
   const userId = req.headers['x-user-id'];
@@ -187,14 +189,25 @@ app.post('/api/servers/:id/invites', (req, res) => {
   res.status(201).json({ code: inviteCode });
 });
 
-// ——— REST : Channels ———————————————————————————————————————————————————————————————————
+// ——— REST : Channels —————————————————————————————————————————————————————————————————————————————————
 
 app.get('/api/channels/:id/messages', (req, res) => {
   const messages = getMessages.all(req.params.id);
   res.json(messages.reverse());
 });
 
-// ——— Proxy GitHub pour l'AI Updater ————————————————————————————————————————————————————————
+// ——— REST : Private Messages ———————————————————————————————————————————————————————————————————————
+
+app.get('/api/private-messages', (req, res) => {
+  const userId = req.headers['x-user-id'];
+  const { otherUserId } = req.query;
+  if (!userId || !otherUserId) return res.status(400).json({ error: 'Paramètres manquants' });
+
+  const messages = getPrivateMessages.all(userId, otherUserId);
+  res.json(messages.reverse());
+});
+
+// ——— Proxy GitHub pour l'AI Updater —————————————————————————————————————————————————————————————————————
 app.post('/api/github-proxy', (req, res) => {
   const { method, path, body, token } = req.body;
   if (!token || !path) return res.status(400).json({ error: 'token et path requis' });
@@ -231,7 +244,7 @@ app.post('/api/github-proxy', (req, res) => {
   proxyReq.end();
 });
 
-// ——— Socket.io ————————————————————————————————————————————————————————————————————————
+// ——— Socket.io ———————————————————————————————————————————————————————————————————————————————————————
 
 io.on('connection', (socket) => {
   console.log(`🔌 Connexion : ${socket.id}`);
@@ -244,10 +257,12 @@ io.on('connection', (socket) => {
     if (!user) return socket.emit('auth-error', 'Utilisateur introuvable');
 
     sessions.set(socket.id, { userId: user.id, username: user.username, currentChannel: null });
+    connectedUsers.set(user.id, { username: user.username, socketId: socket.id });
     updateUserStatus.run('online', user.id);
 
     socket.emit('auth-success', user);
     io.emit('user-status', { userId: user.id, username: user.username, status: 'online' });
+    io.emit('user-list-update', Array.from(connectedUsers.values()).map(u => ({ id: payload.sub, username: u.username })));
     console.log(`✅ Auth : ${user.username}`);
   });
 
@@ -313,6 +328,38 @@ io.on('connection', (socket) => {
     io.to(`channel:${channelId}`).emit('new-msg', msg);
   });
 
+  socket.on('private_message', ({ receiverId, content }) => {
+    const session = sessions.get(socket.id);
+    if (!session) return;
+    if (!content || !content.trim()) return;
+    if (content.length > 2000) return;
+
+    const receiver = getUserById.get(receiverId);
+    if (!receiver) return socket.emit('private_message_error', { error: 'Destinataire introuvable' });
+
+    const result = createPrivateMessage.run(session.userId, receiverId, content.trim());
+    const sender = getUserById.get(session.userId);
+
+    const msg = {
+      id: result.lastInsertRowid,
+      sender_id: session.userId,
+      receiver_id: receiverId,
+      content: content.trim(),
+      created_at: new Date().toISOString(),
+      sender_username: sender.username,
+      sender_pronouns: sender.pronouns,
+      sender_avatar: sender.avatar,
+    };
+
+    // Envoyer au destinataire
+    const receiverSocketId = connectedUsers.get(receiverId)?.socketId;
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit('private_message', msg);
+    }
+    // Envoyer à l'expéditeur
+    socket.emit('private_message', msg);
+  });
+
   socket.on('rtc-offer',     (data) => socket.to(data.to).emit('rtc-offer',     { from: socket.id, signal: data.signal }));
   socket.on('rtc-answer',    (data) => socket.to(data.to).emit('rtc-answer',    { from: socket.id, signal: data.signal }));
   socket.on('rtc-candidate', (data) => socket.to(data.to).emit('rtc-candidate', { from: socket.id, candidate: data.candidate }));
@@ -321,14 +368,16 @@ io.on('connection', (socket) => {
     const session = sessions.get(socket.id);
     if (session) {
       updateUserStatus.run('offline', session.userId);
+      connectedUsers.delete(session.userId);
       io.emit('user-status', { userId: session.userId, username: session.username, status: 'offline' });
+      io.emit('user-list-update', Array.from(connectedUsers.values()).map(u => ({ id: u.userId, username: u.username })));
       sessions.delete(socket.id);
       console.log(`👋 Déco : ${session.username}`);
     }
   });
 });
 
-// ——— Démarrage ————————————————————————————————————————————————————————————————————————
+// ——— Démarrage ———————————————————————————————————————————————————————————————————————————————————————
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 NEXUS V2 — port ${PORT}`);
