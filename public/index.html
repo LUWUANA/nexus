@@ -38,7 +38,7 @@
       overflow: hidden;
     }
 
-    /* ——— Login Screen ————————————————————————————————————————————————————————————————————————— */
+    /* ——— Login Screen ————————————————————————————————————————————————————————————————— */
     #login-screen {
       position: fixed;
       inset: 0;
@@ -132,7 +132,124 @@
       min-height: 20px;
     }
 
-    /* ——— App Layout ————————————————————————————————————————————————————————————————————————— */
+    .recovery-links {
+      margin-top: 20px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+    }
+
+    .recovery-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .recovery-links a:hover {
+      color: var(--neon-accent);
+    }
+
+    /* ——— Recovery Modal ————————————————————————————————————————————————————————————— */
+    #recovery-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    #recovery-modal.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .recovery-modal-card {
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      width: 420px;
+      box-shadow: var(--shadow-md);
+      border: 1px solid rgba(110, 87, 255, 0.1);
+    }
+
+    .recovery-modal-card h2 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.5rem;
+      color: var(--neon-accent);
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .recovery-modal-card p {
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .recovery-field {
+      margin-bottom: 18px;
+    }
+
+    .recovery-field label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .recovery-field input {
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--bg-elevated);
+      border: 1px solid rgba(110, 87, 255, 0.2);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+
+    .recovery-field input:focus {
+      border-color: var(--violet-primary);
+    }
+
+    .recovery-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--violet-primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 6px;
+    }
+
+    .recovery-btn:hover {
+      background: var(--violet-secondary);
+    }
+
+    .recovery-error {
+      color: #f23f43;
+      font-size: 0.85rem;
+      text-align: center;
+      margin-top: 14px;
+      min-height: 20px;
+    }
+
+    /* ——— App Layout ————————————————————————————————————————————————————————————————— */
     #app {
       display: none;
       grid-template-columns: 80px 260px 1fr 240px;
@@ -143,7 +260,7 @@
       display: grid;
     }
 
-    /* ——— Left Sidebar (Servers) ————————————————————————————————————————————————————— */
+    /* ——— Left Sidebar (Servers) ————————————————————————————————————————————— */
     .hubs {
       background: var(--bg-secondary);
       display: flex;
@@ -204,7 +321,7 @@
       border-radius: 1px;
     }
 
-    /* ——— Middle Left Sidebar (Channels & DMs) ————————————————————————————— */
+    /* ——— Middle Left Sidebar (Channels & DMs) ————————————————————— */
     .sidebar {
       background: var(--bg-tertiary);
       display: flex;
@@ -310,7 +427,7 @@
       object-fit: cover;
     }
 
-    /* ——— Chat Area ————————————————————————————————————————————————————————————————— */
+    /* ——— Chat Area ————————————————————————————————————————————————————————————— */
     .chat {
       display: flex;
       flex-direction: column;
@@ -507,7 +624,7 @@
       color: var(--text-secondary);
     }
 
-    /* ——— Right Sidebar (Members) ————————————————————————————————————————————————————— */
+    /* ——— Right Sidebar (Members) ————————————————————————————————————————————— */
     .members {
       background: var(--bg-secondary);
       border-left: 1px solid rgba(110, 87, 255, 0.1);
@@ -588,7 +705,7 @@
       margin-left: 6px;
     }
 
-    /* ——— Modal ————————————————————————————————————————————————————————————————————————— */
+    /* ——— Modal ————————————————————————————————————————————————————————————————— */
     .modal {
       position: fixed;
       inset: 0;
@@ -706,7 +823,7 @@
       min-height: 20px;
     }
 
-    /* ——— Toast ————————————————————————————————————————————————————————————————————————— */
+    /* ——— Toast ————————————————————————————————————————————————————————————————— */
     #toast {
       position: fixed;
       bottom: 24px;
@@ -728,7 +845,7 @@
       opacity: 1;
     }
 
-    /* ——— Scrollbar ————————————————————————————————————————————————————————————————— */
+    /* ——— Scrollbar ————————————————————————————————————————————————————————————— */
     ::-webkit-scrollbar {
       width: 8px;
     }
@@ -757,8 +874,29 @@
       <label>Pseudo</label>
       <input type="text" id="login-username" placeholder="ton_pseudo" autocomplete="off">
     </div>
+    <div class="login-field">
+      <label>Mot de passe</label>
+      <input type="password" id="login-password" placeholder="••••••••" autocomplete="off">
+    </div>
     <button class="login-btn" onclick="doLogin()">Accéder à NEXUS</button>
     <div id="login-error"></div>
+    <div class="recovery-links">
+      <a href="#" onclick="openRecoveryModal('password')">Mot de passe oublié ?</a>
+      <a href="#" onclick="openRecoveryModal('username')">Identifiant oublié ?</a>
+    </div>
+  </div>
+</div>
+
+<div id="recovery-modal">
+  <div class="recovery-modal-card">
+    <h2 id="recovery-modal-title">Récupération de compte</h2>
+    <p id="recovery-modal-desc">Saisis ton adresse e-mail ou ton pseudo pour recevoir un lien de récupération.</p>
+    <div class="recovery-field">
+      <label id="recovery-field-label">E-mail ou Pseudo</label>
+      <input type="text" id="recovery-input" placeholder="email@exemple.com ou ton_pseudo">
+    </div>
+    <button class="recovery-btn" onclick="submitRecovery()">Envoyer le lien</button>
+    <div id="recovery-error" class="recovery-error"></div>
   </div>
 </div>
 
@@ -861,16 +999,71 @@
 let currentUser = null, currentServer = null, currentChannel = null, currentDM = null, lastMsgUser = null, typingTimeout = null;
 const socket = io();
 const typingUsers = new Map();
-const dmList = new Map(); // userId → { username, avatar, pronouns }
+const dmList = new Map(); // userId → { username, avatar, pronouns, status }
 
-// ——— Login ————————————————————————————————————————————————————————————————————————— */
+// ——— Login ————————————————————————————————————————————————————————————— */
 function doLogin() {
   const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value.trim();
+  
   if (!username) return document.getElementById('login-error').textContent = 'Pseudo requis';
   if (username.length < 2 || username.length > 32) return document.getElementById('login-error').textContent = 'Pseudo : 2 à 32 caractères';
+  if (!password) return document.getElementById('login-error').textContent = 'Mot de passe requis';
 
-  localStorage.setItem('nexus_username', username);
-  startApp({ id: 'temp-' + Date.now(), username, avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(username)}`, pronouns: 'iel' });
+  // Simulate login (replace with actual API call in future)
+  fetch('/api/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.error) {
+      document.getElementById('login-error').textContent = data.error;
+    } else {
+      localStorage.setItem('nexus_token', data.token);
+      localStorage.setItem('nexus_username', username);
+      startApp(data.user);
+    }
+  })
+  .catch(() => document.getElementById('login-error').textContent = 'Erreur serveur');
+}
+
+// ——— Account Recovery ————————————————————————————————————————————————————— */
+function openRecoveryModal(type) {
+  const modal = document.getElementById('recovery-modal');
+  const title = document.getElementById('recovery-modal-title');
+  const desc = document.getElementById('recovery-modal-desc');
+  const label = document.getElementById('recovery-field-label');
+  const input = document.getElementById('recovery-input');
+  
+  if (type === 'password') {
+    title.textContent = 'Récupération du mot de passe';
+    desc.textContent = 'Saisis ton pseudo ou ton e-mail pour recevoir un lien de réinitialisation.';
+    label.textContent = 'Pseudo ou E-mail';
+    input.placeholder = 'ton_pseudo ou email@exemple.com';
+  } else {
+    title.textContent = 'Récupération du pseudo';
+    desc.textContent = 'Saisis ton e-mail pour recevoir ton pseudo.';
+    label.textContent = 'E-mail';
+    input.placeholder = 'email@exemple.com';
+  }
+  
+  modal.classList.add('visible');
+}
+
+function closeRecoveryModal() {
+  document.getElementById('recovery-modal').classList.remove('visible');
+  document.getElementById('recovery-error').textContent = '';
+}
+
+function submitRecovery() {
+  const input = document.getElementById('recovery-input').value.trim();
+  if (!input) return document.getElementById('recovery-error').textContent = 'Champ requis';
+  
+  // Simulate recovery request (replace with actual API call in future)
+  toast('Lien de récupération envoyé ! Vérifie ta boîte mail.');
+  closeRecoveryModal();
 }
 
 // ——— App Initialization ————————————————————————————————————————————————————— */
@@ -886,7 +1079,7 @@ async function startApp(user) {
   await loadServers();
 }
 
-// ——— Hub Modal ————————————————————————————————————————————————————————————————— */
+// ——— Hub Modal ————————————————————————————————————————————————————————————— */
 function openHubModal() {
   document.getElementById('hub-modal').classList.add('visible');
 }
@@ -1112,7 +1305,8 @@ socket.on('private_message', (msg) => {
       dmList.set(msg.sender_id, {
         username: msg.sender_username,
         avatar: msg.sender_avatar,
-        pronouns: msg.sender_pronouns
+        pronouns: msg.sender_pronouns,
+        status: 'online'
       });
       renderDMList();
     }
@@ -1163,7 +1357,12 @@ socket.on('user-list-update', (users) => {
     `;
     memberEl.onclick = () => {
       if (!dmList.has(user.id)) {
-        dmList.set(user.id, { username: user.username, avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(user.username)}`, pronouns: 'iel' });
+        dmList.set(user.id, {
+          username: user.username,
+          avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(user.username)}`,
+          pronouns: 'iel',
+          status: 'online'
+        });
         renderDMList();
       }
       startDM(user.id, user.username, `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(user.username)}`, 'iel');
