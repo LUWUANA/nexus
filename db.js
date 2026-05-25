@@ -15,8 +15,7 @@ const db = new Database(DB_PATH);
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
-// ─── Schéma ──────────────────────────────────────────────────────────────────
-
+// ————————— Schéma ———————————————————————————————————————————————————————————————————————————————————————
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
     id        INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -61,10 +60,25 @@ db.exec(`
     joined_at  TEXT    NOT NULL DEFAULT (datetime('now')),
     PRIMARY KEY (server_id, user_id)
   );
+
+  CREATE TABLE IF NOT EXISTS roles (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    server_id   INTEGER NOT NULL REFERENCES servers(id) ON DELETE CASCADE,
+    name        TEXT    NOT NULL,
+    color       TEXT    NOT NULL DEFAULT '#99AAB5',
+    permissions TEXT    NOT NULL DEFAULT '[]', -- JSON array
+    position    INTEGER NOT NULL DEFAULT 0,
+    UNIQUE(server_id, name)
+  );
+
+  CREATE TABLE IF NOT EXISTS user_roles (
+    role_id     INTEGER NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+    user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    PRIMARY KEY (role_id, user_id)
+  );
 `);
 
-// ─── Seed : serveur par défaut ────────────────────────────────────────────────
-
+// ————————— Seed : serveur par défaut ————————————————————————————————————————————————————————————————
 const seedServer = db.prepare(`SELECT id FROM servers WHERE slug = 'nexus-core'`).get();
 if (!seedServer) {
   // Créer un user système pour posséder le serveur par défaut
@@ -82,14 +96,35 @@ if (!seedServer) {
     VALUES ('nexus-core', 'Nexus Core', ?, 'N')
   `).run(ownerId);
 
-  db.prepare(`INSERT INTO channels (server_id, name, type, position) VALUES (?, 'général', 'text', 0)`).run(server.lastInsertRowid);
-  db.prepare(`INSERT INTO channels (server_id, name, type, position) VALUES (?, 'bienvenue', 'text', 1)`).run(server.lastInsertRowid);
-  db.prepare(`INSERT INTO channels (server_id, name, type, position) VALUES (?, 'vocal-général', 'voice', 2)`).run(server.lastInsertRowid);
+  const serverId = server.lastInsertRowid;
+  
+  // Create default roles
+  const adminRole = db.prepare(`
+    INSERT INTO roles (server_id, name, color, permissions, position)
+    VALUES (?, 'Admin', '#F1C40F', ?, 0)
+  `).run(serverId, JSON.stringify(['manage_roles', 'manage_channels', 'manage_messages', 'kick_members', 'ban_members']));
+  
+  const modRole = db.prepare(`
+    INSERT INTO roles (server_id, name, color, permissions, position)
+    VALUES (?, 'Modérateur', '#2ECC71', ?, 1)
+  `).run(serverId, JSON.stringify(['manage_messages', 'kick_members']));
+  
+  const memberRole = db.prepare(`
+    INSERT INTO roles (server_id, name, color, permissions, position)
+    VALUES (?, 'Membre', '#99AAB5', ?, 2)
+  `).run(serverId, JSON.stringify([]));
+  
+  // Assign admin role to server owner
+  db.prepare(`INSERT INTO user_roles (role_id, user_id) VALUES (?, ?)`).run(adminRole.lastInsertRowid, ownerId);
+  
+  db.prepare(`INSERT INTO channels (server_id, name, type, position) VALUES (?, 'général', 'text', 0)`).run(serverId);
+  db.prepare(`INSERT INTO channels (server_id, name, type, position) VALUES (?, 'bienvenue', 'text', 1)`).run(serverId);
+  db.prepare(`INSERT INTO channels (server_id, name, type, position) VALUES (?, 'vocal-général', 'voice', 2)`).run(serverId);
 
-  console.log('✅ Serveur par défaut créé');
+  console.log('✅ Serveur par défaut créé avec rôles');
 }
 
-// ─── Requêtes préparées ────────────────────────────────────────────────────────
+// ————————— Requêtes préparées ———————————————————————————————————————————————————————————————————————
 
 module.exports = {
   db,
@@ -114,7 +149,12 @@ module.exports = {
   // Messages
   getMessages: db.prepare(`
     SELECT m.id, m.content, m.created_at,
-           u.username, u.pronouns, u.avatar
+           u.username, u.pronouns, u.avatar,
+           (SELECT json_group_array(json_object('id', r.id, 'name', r.name, 'color', r.color))
+            FROM user_roles ur
+            JOIN roles r ON ur.role_id = r.id
+            WHERE ur.user_id = u.id AND r.server_id = (SELECT server_id FROM channels WHERE id = m.channel_id))
+           as roles
     FROM messages m
     JOIN users u ON u.id = m.user_id
     WHERE m.channel_id = ?
@@ -129,4 +169,49 @@ module.exports = {
   joinServer: db.prepare(`
     INSERT OR IGNORE INTO server_members (server_id, user_id) VALUES (?, ?)
   `),
+
+  // Roles
+  getRolesByServer: db.prepare(`SELECT * FROM roles WHERE server_id = ? ORDER BY position`),
+  getRoleById: db.prepare(`SELECT * FROM roles WHERE id = ?`),
+  createRole: db.prepare(`
+    INSERT INTO roles (server_id, name, color, permissions, position)
+    VALUES (@server_id, @name, @color, @permissions, @position)
+  `),
+  updateRole: db.prepare(`
+    UPDATE roles SET name = @name, color = @color, permissions = @permissions, position = @position
+    WHERE id = @id
+  `),
+  deleteRole: db.prepare(`DELETE FROM roles WHERE id = ?`),
+  
+  // User Roles
+  getUserRoles: db.prepare(`
+    SELECT r.id, r.name, r.color, r.position
+    FROM user_roles ur
+    JOIN roles r ON ur.role_id = r.id
+    WHERE ur.user_id = ? AND r.server_id = ?
+    ORDER BY r.position
+  `),
+  assignRole: db.prepare(`INSERT OR IGNORE INTO user_roles (role_id, user_id) VALUES (?, ?)`),
+  removeRole: db.prepare(`DELETE FROM user_roles WHERE role_id = ? AND user_id = ?`),
+  
+  // Server Members with Roles
+  getServerMembersWithRoles: db.prepare(`
+    SELECT u.id, u.username, u.avatar, u.pronouns,
+           json_group_array(json_object('id', r.id, 'name', r.name, 'color', r.color)) as roles
+    FROM server_members sm
+    JOIN users u ON sm.user_id = u.id
+    LEFT JOIN user_roles ur ON ur.user_id = u.id
+    LEFT JOIN roles r ON ur.role_id = r.id AND r.server_id = sm.server_id
+    WHERE sm.server_id = ?
+    GROUP BY u.id
+  `),
+  
+  // Permissions
+  getUserPermissions: db.prepare(`
+    SELECT json_group_array(DISTINCT p.value)
+    FROM user_roles ur
+    JOIN roles r ON ur.role_id = r.id
+    JOIN json_each(r.permissions) p
+    WHERE ur.user_id = ? AND r.server_id = ?
+  `)
 };
