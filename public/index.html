@@ -12,12 +12,12 @@
       --violet-primary: #6e57ff;
       --violet-secondary: #5a46e8;
       --neon-accent: #a78bfa;
-      --bg-primary: #121217;
-      --bg-secondary: #1e1f29;
-      --bg-tertiary: #2b2d3a;
-      --bg-elevated: #313342;
-      --bg-input: #383a4a;
-      --bg-message: #3a3c4e;
+      --bg-primary: #12141c;
+      --bg-secondary: #1a1c24;
+      --bg-tertiary: #232634;
+      --bg-elevated: #2a2d3e;
+      --bg-input: #31344a;
+      --bg-message: #2d3042;
       --text-primary: #e0e0e6;
       --text-secondary: #a1a1b5;
       --text-accent: #a78bfa;
@@ -38,7 +38,7 @@
       overflow: hidden;
     }
 
-    /* ——— Login Screen ————————————————————————————————————————————————————————————————— */
+    /* Login Screen */
     #login-screen {
       position: fixed;
       inset: 0;
@@ -149,7 +149,7 @@
       color: var(--neon-accent);
     }
 
-    /* ——— Recovery Modal ————————————————————————————————————————————————————————————— */
+    /* Recovery Modal */
     #recovery-modal {
       position: fixed;
       inset: 0;
@@ -249,10 +249,10 @@
       min-height: 20px;
     }
 
-    /* ——— App Layout ————————————————————————————————————————————————————————————————— */
+    /* App Layout */
     #app {
       display: none;
-      grid-template-columns: 80px 260px 1fr 240px;
+      grid-template-columns: 60px 240px 1fr 240px;
       height: 100vh;
     }
 
@@ -260,77 +260,70 @@
       display: grid;
     }
 
-    /* ——— Left Sidebar (Servers) ————————————————————————————————————————————— */
-    .hubs {
+    /* Ultra-Left Sidebar (DMs) */
+    .dms {
       background: var(--bg-secondary);
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 16px 0;
-      gap: 10px;
+      padding: 12px 0;
+      gap: 8px;
       overflow-y: auto;
     }
 
-    .hub-item {
+    .dm-item {
       position: relative;
-      display: flex;
-      align-items: center;
-    }
-
-    .hub-pill {
-      width: 4px;
-      height: 0;
-      background: var(--neon-accent);
-      border-radius: 0 4px 4px 0;
-      position: absolute;
-      left: 0;
-      transition: height 0.2s;
-    }
-
-    .hub-item.active .hub-pill {
-      height: 44px;
-    }
-
-    .hub-icon {
-      width: 52px;
-      height: 52px;
-      background: var(--bg-tertiary);
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
-      cursor: pointer;
-      transition: all 0.2s;
+      background: var(--bg-tertiary);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 700;
-      font-size: 1.2rem;
-      user-select: none;
-      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.2s;
       border: 2px solid transparent;
     }
 
-    .hub-icon:hover, .hub-item.active .hub-icon {
+    .dm-item:hover, .dm-item.active {
       border-radius: 35%;
       background: var(--violet-primary);
       border-color: var(--neon-accent);
     }
 
-    .hub-sep {
-      width: 36px;
-      height: 2px;
-      background: var(--bg-elevated);
-      border-radius: 1px;
+    .dm-item img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
     }
 
-    /* ——— Middle Left Sidebar (Channels & DMs) ————————————————————— */
-    .sidebar {
+    .dm-item::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #10b981;
+      border: 2px solid var(--bg-secondary);
+    }
+
+    .dm-item.offline::after {
+      background: #6b7280;
+    }
+
+    /* Hubs Sidebar */
+    .hubs {
       background: var(--bg-tertiary);
       display: flex;
       flex-direction: column;
       border-right: 1px solid rgba(110, 87, 255, 0.1);
     }
 
-    .sidebar-header {
-      padding: 18px 16px;
+    .hubs-header {
+      padding: 16px;
       font-weight: 600;
       font-size: 1.1rem;
       border-bottom: 1px solid rgba(110, 87, 255, 0.1);
@@ -340,7 +333,7 @@
       align-items: center;
     }
 
-    .sidebar-header .invite-btn {
+    .hubs-header .invite-btn {
       background: var(--violet-primary);
       color: white;
       border: none;
@@ -397,37 +390,7 @@
       color: var(--neon-accent);
     }
 
-    .dm-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      color: var(--text-secondary);
-      font-size: 0.95rem;
-      transition: all 0.15s;
-    }
-
-    .dm-item:hover {
-      background: rgba(110, 87, 255, 0.1);
-      color: var(--text-primary);
-    }
-
-    .dm-item.active {
-      background: rgba(110, 87, 255, 0.2);
-      color: var(--neon-accent);
-    }
-
-    .dm-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      border: 2px solid var(--violet-primary);
-      object-fit: cover;
-    }
-
-    /* ——— Chat Area ————————————————————————————————————————————————————————————— */
+    /* Chat Area */
     .chat {
       display: flex;
       flex-direction: column;
@@ -443,7 +406,7 @@
       gap: 12px;
       font-weight: 600;
       color: var(--neon-accent);
-      background: rgba(49, 51, 66, 0.5);
+      background: rgba(42, 45, 62, 0.5);
       backdrop-filter: blur(12px);
       position: sticky;
       top: 0;
@@ -452,45 +415,6 @@
 
     .chat-header .icon {
       font-size: 1.1rem;
-    }
-
-    .chat-profile {
-      position: absolute;
-      top: 12px;
-      right: 24px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .profile-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      border: 2px solid var(--violet-primary);
-      cursor: pointer;
-      position: relative;
-    }
-
-    .profile-avatar::after {
-      content: '';
-      position: absolute;
-      bottom: 2px;
-      right: 2px;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: #10b981;
-      border: 2px solid var(--bg-elevated);
-    }
-
-    .profile-avatar.offline::after {
-      background: #6b7280;
-    }
-
-    .profile-username {
-      font-size: 0.9rem;
-      color: var(--text-secondary);
     }
 
     #chat-area {
@@ -624,7 +548,7 @@
       color: var(--text-secondary);
     }
 
-    /* ——— Right Sidebar (Members) ————————————————————————————————————————————— */
+    /* Members Sidebar */
     .members {
       background: var(--bg-secondary);
       border-left: 1px solid rgba(110, 87, 255, 0.1);
@@ -670,6 +594,13 @@
       position: relative;
     }
 
+    .member-avatar img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
     .member-avatar::after {
       content: '';
       position: absolute;
@@ -705,7 +636,7 @@
       margin-left: 6px;
     }
 
-    /* ——— Modal ————————————————————————————————————————————————————————————————— */
+    /* Modal */
     .modal {
       position: fixed;
       inset: 0;
@@ -823,7 +754,7 @@
       min-height: 20px;
     }
 
-    /* ——— Toast ————————————————————————————————————————————————————————————————— */
+    /* Toast */
     #toast {
       position: fixed;
       bottom: 24px;
@@ -845,7 +776,7 @@
       opacity: 1;
     }
 
-    /* ——— Scrollbar ————————————————————————————————————————————————————————————— */
+    /* Scrollbar */
     ::-webkit-scrollbar {
       width: 8px;
     }
@@ -934,35 +865,42 @@
 </div>
 
 <div id="app">
-  <div class="hubs" id="servers-list">
-    <div class="hub-item active">
-      <div class="hub-pill"></div>
-      <div class="hub-icon" title="Nexus Core">✦</div>
-    </div>
-    <div class="hub-sep"></div>
-    <div class="hub-item">
-      <div class="hub-icon" title="Créer/Rejoindre un Hub" onclick="openHubModal()">+</div>
+  <!-- Ultra-Left Sidebar (DMs) -->
+  <div class="dms" id="dms-list">
+    <div class="dm-item active">
+      <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Nexus" alt="Nexus Core">
     </div>
   </div>
 
-  <div class="sidebar">
-    <div class="sidebar-header">
-      <span id="active-server-name">Nexus Core</span>
+  <!-- Hubs Sidebar -->
+  <div class="hubs">
+    <div class="hubs-header">
+      <span id="active-server-name">NEXUS Core</span>
       <button class="invite-btn" onclick="showInviteCode()">INVITER</button>
     </div>
     <div class="channels-list" id="channels-list">
-      <div class="ch-category">Messages Privés</div>
-      <div id="dm-list"></div>
+      <div class="ch-category">ESPACES TEXTE</div>
+      <div class="ch-item active">
+        <span class="icon">◯</span> général
+      </div>
+      <div class="ch-item">
+        <span class="icon">◯</span> bienvenue
+      </div>
+      <div class="ch-category">SCÈNES VOCALES</div>
+      <div class="ch-item">
+        <span class="icon">🔊</span> vocal-général
+      </div>
     </div>
   </div>
 
+  <!-- Chat Area -->
   <div class="chat">
     <div class="chat-header">
       <span class="icon">◯</span>
       <span id="active-channel-name">général</span>
       <div class="chat-profile">
         <div class="profile-avatar" id="my-avatar-btn">
-          <img id="my-avatar" src="" alt="" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+          <img id="my-avatar" src="" alt="">
         </div>
         <span class="profile-username" id="my-username"></span>
       </div>
@@ -986,8 +924,9 @@
     </div>
   </div>
 
+  <!-- Members Sidebar -->
   <div class="members">
-    <div class="members-header">Membres Connectés</div>
+    <div class="members-header">MEMBRES CONNECTÉS</div>
     <div class="members-list" id="members-list"></div>
   </div>
 </div>
@@ -1001,7 +940,7 @@ const socket = io();
 const typingUsers = new Map();
 const dmList = new Map(); // userId → { username, avatar, pronouns, status }
 
-// ——— Login ————————————————————————————————————————————————————————————— */
+// Login
 function doLogin() {
   const username = document.getElementById('login-username').value.trim();
   const password = document.getElementById('login-password').value.trim();
@@ -1009,8 +948,7 @@ function doLogin() {
   if (!username) return document.getElementById('login-error').textContent = 'Pseudo requis';
   if (username.length < 2 || username.length > 32) return document.getElementById('login-error').textContent = 'Pseudo : 2 à 32 caractères';
   if (!password) return document.getElementById('login-error').textContent = 'Mot de passe requis';
-
-  // Simulate login (replace with actual API call in future)
+  
   fetch('/api/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -1029,7 +967,7 @@ function doLogin() {
   .catch(() => document.getElementById('login-error').textContent = 'Erreur serveur');
 }
 
-// ——— Account Recovery ————————————————————————————————————————————————————— */
+// Account Recovery
 function openRecoveryModal(type) {
   const modal = document.getElementById('recovery-modal');
   const title = document.getElementById('recovery-modal-title');
@@ -1061,25 +999,23 @@ function submitRecovery() {
   const input = document.getElementById('recovery-input').value.trim();
   if (!input) return document.getElementById('recovery-error').textContent = 'Champ requis';
   
-  // Simulate recovery request (replace with actual API call in future)
   toast('Lien de récupération envoyé ! Vérifie ta boîte mail.');
   closeRecoveryModal();
 }
 
-// ——— App Initialization ————————————————————————————————————————————————————— */
+// App Initialization
 async function startApp(user) {
   currentUser = user;
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').classList.add('visible');
   document.getElementById('my-avatar').src = user.avatar;
   document.getElementById('my-username').textContent = user.username;
-  document.getElementById('my-avatar-btn').classList.toggle('offline', user.status === 'offline');
   document.getElementById('snd-in').play().catch(() => {});
   socket.emit('auth', { token: localStorage.getItem('nexus_token') || 'temp-token' });
   await loadServers();
 }
 
-// ——— Hub Modal ————————————————————————————————————————————————————————————— */
+// Hub Modal
 function openHubModal() {
   document.getElementById('hub-modal').classList.add('visible');
 }
@@ -1099,7 +1035,7 @@ async function createHub() {
   const name = document.getElementById('hub-name').value.trim();
   const icon = document.getElementById('hub-icon').value.trim() || null;
   if (!name) return document.getElementById('modal-error').textContent = 'Nom requis';
-
+  
   try {
     const res = await fetch('/api/servers', {
       method: 'POST',
@@ -1117,7 +1053,7 @@ async function createHub() {
 async function joinHub() {
   const code = document.getElementById('invite-code').value.trim().toUpperCase();
   if (!code) return document.getElementById('modal-error').textContent = 'Code requis';
-
+  
   try {
     const res = await fetch('/api/servers/join', {
       method: 'POST',
@@ -1134,12 +1070,12 @@ async function joinHub() {
 
 async function showInviteCode() {
   if (!currentServer) return;
-
+  
   try {
     const res = await fetch(`/api/servers/${currentServer.id}/invites`, { headers: { 'X-User-Id': currentUser.id } });
     const data = await res.json();
     if (!res.ok) return toast(data.error || 'Erreur inconnue');
-
+    
     if (data.length === 0) {
       const createRes = await fetch(`/api/servers/${currentServer.id}/invites`, {
         method: 'POST',
@@ -1154,13 +1090,13 @@ async function showInviteCode() {
   } catch { toast('Erreur serveur'); }
 }
 
-// ——— Servers & Channels ————————————————————————————————————————————————————— */
+// Servers & Channels
 async function loadServers() {
   try {
     const res = await fetch('/api/servers', { headers: { 'X-User-Id': currentUser.id } });
     const servers = await res.json();
     if (!servers.length) return;
-
+    
     renderServers(servers);
     currentServer = servers[0];
     document.getElementById('active-server-name').textContent = currentServer.name;
@@ -1171,29 +1107,9 @@ async function loadServers() {
 }
 
 function renderServers(servers) {
-  const list = document.getElementById('servers-list');
-  list.innerHTML = '';
-
-  servers.forEach((srv, index) => {
-    const item = document.createElement('div');
-    item.className = `hub-item ${index === 0 ? 'active' : ''}`;
-    item.innerHTML = `
-      <div class="hub-pill"></div>
-      <div class="hub-icon" title="${srv.name}">${srv.icon || srv.name.charAt(0)}</div>
-    `;
-    item.onclick = () => switchServer(srv);
-    list.insertBefore(item, list.children[list.children.length - 2]);
-  });
-}
-
-function switchServer(srv) {
-  currentServer = srv;
-  document.getElementById('active-server-name').textContent = srv.name;
-  document.querySelectorAll('.hub-item').forEach(el => el.classList.remove('active'));
-  event.currentTarget.classList.add('active');
-  renderChannels(srv.channels);
-  const firstText = srv.channels.find(c => c.type === 'text');
-  if (firstText) joinChannel(firstText);
+  // Only one server (NEXUS Core) in this simplified version
+  const hubItem = document.querySelector('.hubs-header span');
+  hubItem.textContent = servers[0].name;
 }
 
 function renderChannels(channels) {
@@ -1201,26 +1117,20 @@ function renderChannels(channels) {
   const texts = channels.filter(c => c.type === 'text');
   const voices = channels.filter(c => c.type === 'voice');
   list.innerHTML = '';
-
-  list.innerHTML += `<div class="ch-category">Messages Privés</div>`;
-  list.innerHTML += `<div id="dm-list"></div>`;
-  renderDMList();
-
-  if (texts.length) list.innerHTML += `<div class="ch-category">Espaces texte</div>`;
+  
+  if (texts.length) list.innerHTML += `<div class="ch-category">ESPACES TEXTE</div>`;
   texts.forEach(ch => {
     const el = document.createElement('div');
-    el.className = 'ch-item';
-    el.id = `ch-${ch.id}`;
+    el.className = `ch-item ${ch.id === currentChannel?.id ? 'active' : ''}`;
     el.innerHTML = `<span class="icon">◯</span> ${ch.name}`;
     el.onclick = () => joinChannel(ch);
     list.appendChild(el);
   });
-
-  if (voices.length) list.innerHTML += `<div class="ch-category">Scènes vocales</div>`;
+  
+  if (voices.length) list.innerHTML += `<div class="ch-category">SCÈNES VOCALES</div>`;
   voices.forEach(ch => {
     const el = document.createElement('div');
     el.className = 'ch-item';
-    el.id = `ch-${ch.id}`;
     el.innerHTML = `<span class="icon">🔊</span> ${ch.name}`;
     el.onclick = () => toast('Audio/Vidéo bientôt disponible !');
     list.appendChild(el);
@@ -1228,18 +1138,29 @@ function renderChannels(channels) {
 }
 
 function renderDMList() {
-  const dmListEl = document.getElementById('dm-list');
-  dmListEl.innerHTML = '';
-
+  const dmsList = document.getElementById('dms-list');
+  dmsList.innerHTML = '';
+  
+  // Add Nexus Core as first DM item
+  const nexusItem = document.createElement('div');
+  nexusItem.className = `dm-item ${!currentDM ? 'active' : ''}`;
+  nexusItem.innerHTML = `<img src="https://api.dicebear.com/7.x/bottts/svg?seed=Nexus" alt="Nexus Core">`;
+  nexusItem.onclick = () => {
+    currentDM = null;
+    document.querySelectorAll('.dm-item').forEach(el => el.classList.remove('active'));
+    nexusItem.classList.add('active');
+    if (currentChannel) joinChannel(currentChannel);
+  };
+  dmsList.appendChild(nexusItem);
+  
+  // Add other DMs
   dmList.forEach((dm, userId) => {
-    const el = document.createElement('div');
-    el.className = `dm-item ${currentDM?.id === userId ? 'active' : ''}`;
-    el.innerHTML = `
-      <img class="dm-avatar" src="${dm.avatar}" alt="">
-      <span>${dm.username}</span>
-    `;
-    el.onclick = () => startDM(userId, dm.username, dm.avatar, dm.pronouns);
-    dmListEl.appendChild(el);
+    const dmItem = document.createElement('div');
+    dmItem.className = `dm-item ${currentDM?.id === userId ? 'active' : ''}`;
+    dmItem.innerHTML = `<img src="${dm.avatar}" alt="${dm.username}">`;
+    dmItem.onclick = () => startDM(userId, dm.username, dm.avatar, dm.pronouns);
+    dmItem.classList.toggle('offline', dm.status === 'offline');
+    dmsList.appendChild(dmItem);
   });
 }
 
@@ -1248,9 +1169,8 @@ function joinChannel(ch) {
   currentDM = null;
   lastMsgUser = null;
   document.getElementById('active-channel-name').textContent = ch.name;
-  document.querySelectorAll('.ch-item, .dm-item').forEach(el => el.classList.remove('active'));
-  const el = document.getElementById(`ch-${ch.id}`);
-  if (el) el.classList.add('active');
+  document.querySelectorAll('.ch-item').forEach(el => el.classList.remove('active'));
+  document.querySelector(`.ch-item:nth-child(${(ch.position || 0) + 2})`).classList.add('active');
   document.getElementById('chat-area').innerHTML = '';
   document.getElementById('typing-indicator').classList.remove('visible');
   typingUsers.clear();
@@ -1263,12 +1183,11 @@ function startDM(userId, username, avatar, pronouns) {
   lastMsgUser = null;
   document.getElementById('active-channel-name').textContent = `MP avec ${username}`;
   document.querySelectorAll('.ch-item, .dm-item').forEach(el => el.classList.remove('active'));
-  document.querySelector(`.dm-item:nth-child(${Array.from(dmList.keys()).indexOf(userId) + 1})`).classList.add('active');
+  document.querySelector(`.dm-item:nth-child(${Array.from(dmList.keys()).indexOf(userId) + 2})`).classList.add('active');
   document.getElementById('chat-area').innerHTML = '';
   document.getElementById('typing-indicator').classList.remove('visible');
   typingUsers.clear();
-
-  // Load DM history
+  
   fetch(`/api/private-messages?otherUserId=${userId}`, { headers: { 'X-User-Id': currentUser.id } })
     .then(res => res.json())
     .then(messages => {
@@ -1277,7 +1196,7 @@ function startDM(userId, username, avatar, pronouns) {
     });
 }
 
-// ——— Socket Events ————————————————————————————————————————————————————————————— */
+// Socket Events
 socket.on('auth-success', (user) => {
   currentUser = { ...currentUser, ...user };
   console.log('✅ Socket auth', user.username);
@@ -1293,14 +1212,13 @@ socket.on('channel-history', ({ messages }) => {
 });
 
 socket.on('new-msg', (msg) => {
-  if (currentDM) return; // Ignore channel messages in DM mode
+  if (currentDM) return;
   renderMsg(msg);
   scrollToBottom();
 });
 
 socket.on('private_message', (msg) => {
   if (msg.sender_id !== currentDM?.id && msg.receiver_id !== currentDM?.id) {
-    // Add to DM list if not already there
     if (!dmList.has(msg.sender_id)) {
       dmList.set(msg.sender_id, {
         username: msg.sender_username,
@@ -1313,7 +1231,7 @@ socket.on('private_message', (msg) => {
     toast(`Nouveau MP de ${msg.sender_username}`);
     return;
   }
-
+  
   renderMsg(msg);
   scrollToBottom();
 });
@@ -1322,34 +1240,33 @@ socket.on('user-status', ({ userId, status, username }) => {
   if (userId === currentUser.id) {
     document.getElementById('my-avatar-btn').classList.toggle('offline', status === 'offline');
   }
-
-  // Update members list
+  
   const memberEl = document.getElementById(`member-${userId}`);
   if (memberEl) {
     memberEl.querySelector('.member-avatar').classList.toggle('offline', status === 'offline');
   }
-
-  // Update DM list
+  
   if (dmList.has(userId)) {
     dmList.get(userId).status = status;
+    renderDMList();
   }
-
+  
   toast(`${status === 'online' ? '🟢' : '⚪'} ${username} est ${status}`);
 });
 
 socket.on('user-list-update', (users) => {
   const membersList = document.getElementById('members-list');
   membersList.innerHTML = '';
-
+  
   users.forEach(user => {
     if (user.id === currentUser.id) return;
-
+    
     const memberEl = document.createElement('div');
     memberEl.className = 'member-item';
     memberEl.id = `member-${user.id}`;
     memberEl.innerHTML = `
       <div class="member-avatar">
-        <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(user.username)}" alt="" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+        <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(user.username)}" alt="">
       </div>
       <div class="member-info">
         <div class="member-username">${escHtml(user.username)}</div>
@@ -1382,7 +1299,7 @@ socket.on('user-stop-typing', ({ userId }) => {
   updateTypingIndicator();
 });
 
-// ——— UI Helpers ————————————————————————————————————————————————————————————— */
+// UI Helpers
 function updateTypingIndicator() {
   const indicator = document.getElementById('typing-indicator');
   if (typingUsers.size === 0) {
@@ -1401,7 +1318,7 @@ function renderMsg(msg) {
   const time = new Date(msg.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   const bubble = document.createElement('div');
   bubble.className = `message-bubble ${msg.sender_id === currentUser.id || msg.username === currentUser.username ? 'sent' : 'received'}`;
-
+  
   if (currentDM) {
     bubble.innerHTML = `
       <div>
@@ -1421,7 +1338,7 @@ function renderMsg(msg) {
       <p>${escHtml(msg.content)}</p>
     `;
   }
-
+  
   area.appendChild(bubble);
 }
 
@@ -1432,15 +1349,15 @@ function handleKey(e) {
   if (e.key === 'Enter' && !e.shiftKey) {
     const text = e.target.value.trim();
     if (!text) return;
-
+    
     if (currentDM) {
       socket.emit('private_message', { receiverId: currentDM.id, content: text });
     } else if (currentChannel) {
       socket.emit('send-msg', { channelId: currentChannel.id, content: text });
     }
-
+    
     e.target.value = '';
-    socket.emit('typing-stop', { channelId: currentChannel?.id });
+    if (currentChannel) socket.emit('typing-stop', { channelId: currentChannel.id });
   }
 }
 
@@ -1461,11 +1378,16 @@ function toast(msg) {
   setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-// ——— Auto-login ————————————————————————————————————————————————————————————— */
+// Auto-login
 (() => {
   const username = localStorage.getItem('nexus_username');
   if (username) {
-    startApp({ id: 'temp-' + Date.now(), username, avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(username)}`, pronouns: 'iel' });
+    startApp({
+      id: 'temp-' + Date.now(),
+      username,
+      avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(username)}`,
+      pronouns: 'iel'
+    });
   }
 })();
 </script>
