@@ -255,8 +255,9 @@ N'inclus dans files QUE les fichiers modifiés, avec leur contenu COMPLET. Respe
           { role: 'system', content: systemPrompt },
           { role: 'user', content: `Codebase actuel :\n\n${codeContext.join('\n\n')}\n\n---\n\nDemande : ${request}` }
         ],
-        max_tokens: 8192,
-        temperature: 0.1,
+max_tokens: 16384,
+temperature: 0.1,
+response_format: { type: 'json_object' },
       }),
     });
 
