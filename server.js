@@ -1,6 +1,5 @@
-// server.js — NEXUS Backend V2
+// server.js — NEXUS Backend V2 (Refonte Ultra-Gauche)
 require('dotenv').config();
-
 const express  = require('express');
 const http     = require('http');
 const https    = require('https');
@@ -8,17 +7,23 @@ const { Server } = require('socket.io');
 const bcrypt   = require('bcryptjs');
 const jwt      = require('jsonwebtoken');
 const crypto   = require('crypto');
+const multer   = require('multer');
+const path     = require('path');
+const fs       = require('fs');
+const marked   = require('marked');
 
 const {
   db,
   createUser, getUserByUsername, getUserById,
   updateUserStatus, updateUserAvatar,
   getServers, getServerById, getServerBySlug, createServer,
-  getChannelsByServer, getChannelById,
+  getChannelsByServer, getChannelById, createChannel,
   getMessages, createMessage,
   joinServer, getServerMembers,
   createInvite, getInviteByCode, getInvitesByServer,
-  createPrivateMessage, getPrivateMessages
+  createPrivateMessage, getPrivateMessages,
+  createUserProfile, getUserProfile, updateUserProfile,
+  createAttachment, getAttachmentById
 } = require('./db');
 
 const app    = express();
@@ -27,15 +32,29 @@ const io     = new Server(server, { cors: { origin: '*' } });
 
 const PORT       = process.env.PORT || 4242;
 const JWT_SECRET = process.env.JWT_SECRET || 'nexus-dev-secret-CHANGE-ME';
+const UPLOAD_DIR = path.join(__dirname, 'uploads');
+if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
+// Middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static('public'));
+app.use('/uploads', express.static(UPLOAD_DIR));
 
-// ——— Map : socketId → userId ————————————————————————————————————————————————————————————————————————
+// Multer pour uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, UPLOAD_DIR),
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+const upload = multer({ storage });
+
+// Sessions
 const sessions = new Map();
 const connectedUsers = new Map(); // userId → { username, socketId }
 
-// ——— Helper JWT ————————————————————————————————————————————————————————————————————————————————————————
+// Helpers
 function signToken(userId) {
   return jwt.sign({ sub: userId }, JWT_SECRET, { expiresIn: '7d' });
 }
@@ -45,13 +64,11 @@ function verifyToken(token) {
   catch { return null; }
 }
 
-// ——— Helper Invite Code ———————————————————————————————————————————————————————————————————————————————
 function generateInviteCode() {
   return crypto.randomBytes(4).toString('hex').toUpperCase();
 }
 
-// ——— REST : Auth ———————————————————————————————————————————————————————————————————————————————————————
-
+// REST: Auth
 app.post('/api/register', (req, res) => {
   const { username, password, pronouns } = req.body;
   if (!username || !password) return res.status(400).json({ error: 'Pseudo et mot de passe requis' });
@@ -66,6 +83,7 @@ app.post('/api/register', (req, res) => {
   let result;
   try {
     result = createUser.run({ username, password: hash, pronouns: pronouns || 'iel', avatar });
+    createUserProfile.run({ user_id: result.lastInsertRowid, bio: '', banner_color: '#6e57ff' });
   } catch (e) {
     return res.status(500).json({ error: 'Erreur serveur' });
   }
@@ -92,8 +110,50 @@ app.post('/api/login', (req, res) => {
   res.json({ token, user });
 });
 
-// ——— REST : Servers —————————————————————————————————————————————————————————————————————————————————————
+// REST: Profile
+app.get('/api/profile', (req, res) => {
+  const userId = req.headers['x-user-id'];
+  if (!userId) return res.status(401).json({ error: 'Non autorisé' });
 
+  const profile = getUserProfile.get(userId);
+  if (!profile) return res.status(404).json({ error: 'Profil introuvable' });
+  res.json(profile);
+});
+
+app.put('/api/profile', (req, res) => {
+  const userId = req.headers['x-user-id'];
+  if (!userId) return res.status(401).json({ error: 'Non autorisé' });
+
+  const { bio, banner_color, avatar_url } = req.body;
+  updateUserProfile.run({ bio, banner_color, avatar_url, user_id: userId });
+  if (avatar_url) updateUserAvatar.run(avatar_url, userId);
+
+  const profile = getUserProfile.get(userId);
+  res.json(profile);
+});
+
+// REST: Attachments
+app.post('/api/upload', upload.single('file'), (req, res) => {
+  const userId = req.headers['x-user-id'];
+  if (!userId) return res.status(401).json({ error: 'Non autorisé' });
+  if (!req.file) return res.status(400).json({ error: 'Fichier requis' });
+
+  const result = createAttachment.run({
+    user_id: userId,
+    filename: req.file.originalname,
+    path: req.file.path.replace(/\\/g, '/'),
+    size: req.file.size,
+    mime_type: req.file.mimetype
+  });
+
+  res.status(201).json({
+    id: result.lastInsertRowid,
+    url: `/uploads/${path.basename(req.file.path)}`,
+    filename: req.file.originalname
+  });
+});
+
+// REST: Servers
 app.get('/api/servers', (req, res) => {
   const userId = req.headers['x-user-id'];
   if (!userId) return res.status(401).json({ error: 'Non autorisé' });
@@ -121,11 +181,10 @@ app.post('/api/servers', (req, res) => {
   const serverId = result.lastInsertRowid;
 
   joinServer.run(serverId, userId);
-
-  const defaultChannel = db.prepare(`
-    INSERT INTO channels (server_id, name, type, position)
-    VALUES (?, 'général', 'text', 0)
-  `).run(serverId);
+  createChannel.run({ server_id: serverId, name: 'général', type: 'text', position: 0 });
+  createChannel.run({ server_id: serverId, name: 'bienvenue', type: 'text', position: 1 });
+  createChannel.run({ server_id: serverId, name: 'vocal-général', type: 'voice', position: 2 });
+  createChannel.run({ server_id: serverId, name: 'knowledge-hub', type: 'forum', position: 3 });
 
   const inviteCode = generateInviteCode();
   createInvite.run({ code: inviteCode, server_id: serverId, created_by: userId });
@@ -136,68 +195,31 @@ app.post('/api/servers', (req, res) => {
     slug,
     icon,
     inviteCode,
-    channels: [{ id: defaultChannel.lastInsertRowid, name: 'général', type: 'text' }]
+    channels: getChannelsByServer.all(serverId)
   });
 });
 
-app.post('/api/servers/join', (req, res) => {
-  const { inviteCode } = req.body;
+// REST: Channels
+app.post('/api/channels', (req, res) => {
+  const { server_id, name, type } = req.body;
   const userId = req.headers['x-user-id'];
-  if (!userId || !inviteCode) return res.status(400).json({ error: 'Code d\'invitation requis' });
+  if (!userId || !server_id || !name || !type) return res.status(400).json({ error: 'Paramètres manquants' });
 
-  const invite = getInviteByCode.get(inviteCode);
-  if (!invite) return res.status(404).json({ error: 'Invitation invalide' });
-
-  const existingMember = db.prepare(`
-    SELECT 1 FROM server_members WHERE server_id = ? AND user_id = ?
-  `).get(invite.server_id, userId);
-
-  if (existingMember) return res.status(409).json({ error: 'Déjà membre de ce hub' });
-
-  joinServer.run(invite.server_id, userId);
-  res.json({ success: true, serverId: invite.server_id });
-});
-
-app.get('/api/servers/:id/invites', (req, res) => {
-  const userId = req.headers['x-user-id'];
-  const serverId = req.params.id;
-  if (!userId || !serverId) return res.status(400).json({ error: 'Paramètres manquants' });
-
-  const isMember = db.prepare(`
-    SELECT 1 FROM server_members WHERE server_id = ? AND user_id = ?
-  `).get(serverId, userId);
-
+  const isMember = db.prepare(`SELECT 1 FROM server_members WHERE server_id = ? AND user_id = ?`).get(server_id, userId);
   if (!isMember) return res.status(403).json({ error: 'Non autorisé' });
 
-  const invites = getInvitesByServer.all(serverId);
-  res.json(invites);
+  const position = db.prepare(`SELECT MAX(position) + 1 as pos FROM channels WHERE server_id = ?`).get(server_id).pos || 0;
+  const result = createChannel.run({ server_id, name, type, position });
+
+  res.status(201).json({ id: result.lastInsertRowid, server_id, name, type, position });
 });
-
-app.post('/api/servers/:id/invites', (req, res) => {
-  const userId = req.headers['x-user-id'];
-  const serverId = req.params.id;
-  if (!userId || !serverId) return res.status(400).json({ error: 'Paramètres manquants' });
-
-  const isMember = db.prepare(`
-    SELECT 1 FROM server_members WHERE server_id = ? AND user_id = ?
-  `).get(serverId, userId);
-
-  if (!isMember) return res.status(403).json({ error: 'Non autorisé' });
-
-  const inviteCode = generateInviteCode();
-  createInvite.run({ code: inviteCode, server_id: serverId, created_by: userId });
-  res.status(201).json({ code: inviteCode });
-});
-
-// ——— REST : Channels —————————————————————————————————————————————————————————————————————————————————
 
 app.get('/api/channels/:id/messages', (req, res) => {
   const messages = getMessages.all(req.params.id);
   res.json(messages.reverse());
 });
 
-// ——— REST : Private Messages ———————————————————————————————————————————————————————————————————————
-
+// REST: Private Messages
 app.get('/api/private-messages', (req, res) => {
   const userId = req.headers['x-user-id'];
   const { otherUserId } = req.query;
@@ -207,45 +229,7 @@ app.get('/api/private-messages', (req, res) => {
   res.json(messages.reverse());
 });
 
-// ——— Proxy GitHub pour l'AI Updater —————————————————————————————————————————————————————————————————————
-app.post('/api/github-proxy', (req, res) => {
-  const { method, path, body, token } = req.body;
-  if (!token || !path) return res.status(400).json({ error: 'token et path requis' });
-
-  const payload = JSON.stringify(body || null);
-
-  const options = {
-    hostname: 'api.github.com',
-    path,
-    method: method || 'GET',
-    headers: {
-      'Authorization':  `Bearer ${token}`,
-      'Accept':         'application/vnd.github+json',
-      'User-Agent':     'nexus-ai-updater',
-      'Content-Type':   'application/json',
-      'Content-Length': body ? Buffer.byteLength(payload) : 0,
-    },
-  };
-
-  const proxyReq = https.request(options, (proxyRes) => {
-    let data = '';
-    proxyRes.on('data', chunk => data += chunk);
-    proxyRes.on('end', () => {
-      try {
-        res.status(proxyRes.statusCode).json(JSON.parse(data));
-      } catch {
-        res.status(proxyRes.statusCode).send(data);
-      }
-    });
-  });
-
-  proxyReq.on('error', err => res.status(500).json({ error: err.message }));
-  if (body) proxyReq.write(payload);
-  proxyReq.end();
-});
-
-// ——— Socket.io ———————————————————————————————————————————————————————————————————————————————————————
-
+// Socket.io
 io.on('connection', (socket) => {
   console.log(`🔌 Connexion : ${socket.id}`);
 
@@ -262,7 +246,7 @@ io.on('connection', (socket) => {
 
     socket.emit('auth-success', user);
     io.emit('user-status', { userId: user.id, username: user.username, status: 'online' });
-    io.emit('user-list-update', Array.from(connectedUsers.values()).map(u => ({ id: payload.sub, username: u.username })));
+    io.emit('user-list-update', Array.from(connectedUsers.values()).map(u => ({ id: u.userId, username: u.username })));
     console.log(`✅ Auth : ${user.username}`);
   });
 
@@ -274,7 +258,6 @@ io.on('connection', (socket) => {
     if (!channel) return;
 
     if (session.currentChannel) socket.leave(`channel:${session.currentChannel}`);
-
     session.currentChannel = channelId;
     socket.join(`channel:${channelId}`);
 
@@ -303,7 +286,7 @@ io.on('connection', (socket) => {
     });
   });
 
-  socket.on('send-msg', ({ channelId, content }) => {
+  socket.on('send-msg', ({ channelId, content, attachments }) => {
     const session = sessions.get(socket.id);
     if (!session) return;
     if (!content || !content.trim()) return;
@@ -318,17 +301,18 @@ io.on('connection', (socket) => {
     const msg = {
       id:         result.lastInsertRowid,
       channel_id: channelId,
-      content:    content.trim(),
+      content:    marked.parse(content.trim()),
       created_at: new Date().toISOString(),
       username:   user.username,
       pronouns:   user.pronouns,
       avatar:     user.avatar,
+      attachments: attachments || []
     };
 
     io.to(`channel:${channelId}`).emit('new-msg', msg);
   });
 
-  socket.on('private_message', ({ receiverId, content }) => {
+  socket.on('private_message', ({ receiverId, content, attachments }) => {
     const session = sessions.get(socket.id);
     if (!session) return;
     if (!content || !content.trim()) return;
@@ -344,25 +328,29 @@ io.on('connection', (socket) => {
       id: result.lastInsertRowid,
       sender_id: session.userId,
       receiver_id: receiverId,
-      content: content.trim(),
+      content: marked.parse(content.trim()),
       created_at: new Date().toISOString(),
       sender_username: sender.username,
       sender_pronouns: sender.pronouns,
       sender_avatar: sender.avatar,
+      attachments: attachments || []
     };
 
-    // Envoyer au destinataire
     const receiverSocketId = connectedUsers.get(receiverId)?.socketId;
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit('private_message', msg);
-    }
-    // Envoyer à l'expéditeur
+    if (receiverSocketId) io.to(receiverSocketId).emit('private_message', msg);
     socket.emit('private_message', msg);
   });
 
-  socket.on('rtc-offer',     (data) => socket.to(data.to).emit('rtc-offer',     { from: socket.id, signal: data.signal }));
-  socket.on('rtc-answer',    (data) => socket.to(data.to).emit('rtc-answer',    { from: socket.id, signal: data.signal }));
-  socket.on('rtc-candidate', (data) => socket.to(data.to).emit('rtc-candidate', { from: socket.id, candidate: data.candidate }));
+  socket.on('update-profile', ({ bio, banner_color, avatar_url }) => {
+    const session = sessions.get(socket.id);
+    if (!session) return;
+
+    updateUserProfile.run({ bio, banner_color, avatar_url, user_id: session.userId });
+    if (avatar_url) updateUserAvatar.run(avatar_url, session.userId);
+
+    const profile = getUserProfile.get(session.userId);
+    io.emit('profile-updated', { userId: session.userId, profile });
+  });
 
   socket.on('disconnect', () => {
     const session = sessions.get(socket.id);
@@ -377,8 +365,7 @@ io.on('connection', (socket) => {
   });
 });
 
-// ——— Démarrage ———————————————————————————————————————————————————————————————————————————————————————
-
+// Démarrage
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 NEXUS V2 — port ${PORT}`);
   console.log(`   DB     : ${process.env.DB_PATH || './data/nexus.db'}`);
