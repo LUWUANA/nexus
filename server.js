@@ -7,14 +7,17 @@ const https    = require('https');
 const { Server } = require('socket.io');
 const bcrypt   = require('bcryptjs');
 const jwt      = require('jsonwebtoken');
+const crypto   = require('crypto');
 
 const {
   db,
   createUser, getUserByUsername, getUserById,
-  updateUserStatus,
-  getServers, getChannelsByServer, getChannelById,
+  updateUserStatus, updateUserAvatar,
+  getServers, getServerById, getServerBySlug, createServer,
+  getChannelsByServer, getChannelById,
   getMessages, createMessage,
-  joinServer,
+  joinServer, getServerMembers,
+  createInvite, getInviteByCode, getInvitesByServer
 } = require('./db');
 
 const app    = express();
@@ -38,6 +41,11 @@ function signToken(userId) {
 function verifyToken(token) {
   try { return jwt.verify(token, JWT_SECRET); }
   catch { return null; }
+}
+
+// ——— Helper Invite Code ————————————————————————————————————————————————————————————————
+function generateInviteCode() {
+  return crypto.randomBytes(4).toString('hex').toUpperCase();
 }
 
 // ——— REST : Auth ————————————————————————————————————————————————————————————————————————
@@ -82,16 +90,104 @@ app.post('/api/login', (req, res) => {
   res.json({ token, user });
 });
 
-// ——— REST : Données —————————————————————————————————————————————————————————————————————
+// ——— REST : Servers —————————————————————————————————————————————————————————————————————
 
 app.get('/api/servers', (req, res) => {
-  const servers = getServers.all();
-  const result  = servers.map(srv => ({
+  const userId = req.headers['x-user-id'];
+  if (!userId) return res.status(401).json({ error: 'Non autorisé' });
+
+  const servers = db.prepare(`
+    SELECT s.* FROM servers s
+    JOIN server_members m ON s.id = m.server_id
+    WHERE m.user_id = ?
+  `).all(userId);
+
+  const result = servers.map(srv => ({
     ...srv,
     channels: getChannelsByServer.all(srv.id),
   }));
   res.json(result);
 });
+
+app.post('/api/servers', (req, res) => {
+  const { name, icon } = req.body;
+  const userId = req.headers['x-user-id'];
+  if (!userId || !name) return res.status(400).json({ error: 'Nom et utilisateur requis' });
+
+  const slug = name.toLowerCase().replace(/\s+/g, '-') + '-' + Math.random().toString(36).substring(2, 6);
+  const result = createServer.run({ name, slug, owner_id: userId, icon: icon || null });
+  const serverId = result.lastInsertRowid;
+
+  joinServer.run(serverId, userId);
+
+  const defaultChannel = db.prepare(`
+    INSERT INTO channels (server_id, name, type, position)
+    VALUES (?, 'général', 'text', 0)
+  `).run(serverId);
+
+  const inviteCode = generateInviteCode();
+  createInvite.run({ code: inviteCode, server_id: serverId, created_by: userId });
+
+  res.status(201).json({
+    id: serverId,
+    name,
+    slug,
+    icon,
+    inviteCode,
+    channels: [{ id: defaultChannel.lastInsertRowid, name: 'général', type: 'text' }]
+  });
+});
+
+app.post('/api/servers/join', (req, res) => {
+  const { inviteCode } = req.body;
+  const userId = req.headers['x-user-id'];
+  if (!userId || !inviteCode) return res.status(400).json({ error: 'Code d\'invitation requis' });
+
+  const invite = getInviteByCode.get(inviteCode);
+  if (!invite) return res.status(404).json({ error: 'Invitation invalide' });
+
+  const existingMember = db.prepare(`
+    SELECT 1 FROM server_members WHERE server_id = ? AND user_id = ?
+  `).get(invite.server_id, userId);
+
+  if (existingMember) return res.status(409).json({ error: 'Déjà membre de ce hub' });
+
+  joinServer.run(invite.server_id, userId);
+  res.json({ success: true, serverId: invite.server_id });
+});
+
+app.get('/api/servers/:id/invites', (req, res) => {
+  const userId = req.headers['x-user-id'];
+  const serverId = req.params.id;
+  if (!userId || !serverId) return res.status(400).json({ error: 'Paramètres manquants' });
+
+  const isMember = db.prepare(`
+    SELECT 1 FROM server_members WHERE server_id = ? AND user_id = ?
+  `).get(serverId, userId);
+
+  if (!isMember) return res.status(403).json({ error: 'Non autorisé' });
+
+  const invites = getInvitesByServer.all(serverId);
+  res.json(invites);
+});
+
+app.post('/api/servers/:id/invites', (req, res) => {
+  const userId = req.headers['x-user-id'];
+  const serverId = req.params.id;
+  if (!userId || !serverId) return res.status(400).json({ error: 'Paramètres manquants' });
+
+  const isMember = db.prepare(`
+    SELECT 1 FROM server_members WHERE server_id = ? AND user_id = ?
+  `).get(serverId, userId);
+
+  if (!isMember) return res.status(403).json({ error: 'Non autorisé' });
+
+  const inviteCode = generateInviteCode();
+  createInvite.run({ code: inviteCode, server_id: serverId, created_by: userId });
+  res.status(201).json({ code: inviteCode });
+});
+
+// ——— REST : Channels ———————————————————————————————————————————————————————————————————
 
 app.get('/api/channels/:id/messages', (req, res) => {
   const messages = getMessages.all(req.params.id);
@@ -99,11 +195,8 @@ app.get('/api/channels/:id/messages', (req, res) => {
 });
 
 // ——— Proxy GitHub pour l'AI Updater ————————————————————————————————————————————————————————
-// Évite les problèmes CORS en passant par le serveur Node.js
-
 app.post('/api/github-proxy', (req, res) => {
   const { method, path, body, token } = req.body;
-
   if (!token || !path) return res.status(400).json({ error: 'token et path requis' });
 
   const payload = JSON.stringify(body || null);
@@ -138,7 +231,7 @@ app.post('/api/github-proxy', (req, res) => {
   proxyReq.end();
 });
 
-// ——— Socket.io —————————————————————————————————————————————————————————————————————————
+// ——— Socket.io ————————————————————————————————————————————————————————————————————————
 
 io.on('connection', (socket) => {
   console.log(`🔌 Connexion : ${socket.id}`);
@@ -235,7 +328,7 @@ io.on('connection', (socket) => {
   });
 });
 
-// ——— Démarrage ———————————————————————————————————————————————————————————————————————————
+// ——— Démarrage ————————————————————————————————————————————————————————————————————————
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 NEXUS V2 — port ${PORT}`);

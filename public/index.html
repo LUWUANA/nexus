@@ -38,7 +38,7 @@
       overflow: hidden;
     }
 
-    /* ——— Auth ————————————————————————————————————————————————————————————————— */
+    /* ——— Auth —————————————————————————————————————————————————————————————————————————— */
     #auth-screen {
       position: fixed; inset: 0;
       background: var(--bg-primary);
@@ -158,7 +158,125 @@
       min-height: 20px;
     }
 
-    /* ——— App ————————————————————————————————————————————————————————————————— */
+    /* ——— Hub Modal ——————————————————————————————————————————————————————————————————— */
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    .modal.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal-card {
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      width: 460px;
+      box-shadow: var(--shadow-md);
+      border: 1px solid rgba(110, 87, 255, 0.1);
+    }
+
+    .modal-card h2 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.5rem;
+      color: var(--neon-accent);
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .modal-tabs {
+      display: flex;
+      margin-bottom: 24px;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      background: var(--bg-elevated);
+    }
+
+    .modal-tab {
+      flex: 1;
+      padding: 12px;
+      text-align: center;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .modal-tab.active {
+      background: var(--violet-primary);
+      color: #fff;
+    }
+
+    .modal-field {
+      margin-bottom: 18px;
+    }
+
+    .modal-field label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .modal-field input {
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--bg-elevated);
+      border: 1px solid rgba(110, 87, 255, 0.2);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+
+    .modal-field input:focus {
+      border-color: var(--violet-primary);
+    }
+
+    .modal-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--violet-primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 6px;
+    }
+
+    .modal-btn:hover {
+      background: var(--violet-secondary);
+    }
+
+    .modal-error {
+      color: #f23f43;
+      font-size: 0.85rem;
+      text-align: center;
+      margin-top: 14px;
+      min-height: 20px;
+    }
+
+    /* ——— App ——————————————————————————————————————————————————————————————————————————— */
     #app {
       display: none;
       grid-template-columns: 80px 260px 1fr;
@@ -242,6 +360,20 @@
       font-size: 1.1rem;
       border-bottom: 1px solid rgba(110, 87, 255, 0.1);
       color: var(--neon-accent);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .sidebar-header .invite-btn {
+      background: var(--violet-primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 4px 8px;
+      font-size: 0.7rem;
+      cursor: pointer;
+      font-weight: 600;
     }
 
     .channels-list {
@@ -348,6 +480,11 @@
 
     .profile-avatar.offline::after {
       background: #6b7280;
+    }
+
+    .profile-username {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
     }
 
     #chat-area {
@@ -559,6 +696,39 @@
   </div>
 </div>
 
+<div id="hub-modal" class="modal">
+  <div class="modal-card">
+    <h2>Gérer les Hubs</h2>
+
+    <div class="modal-tabs">
+      <div class="modal-tab active" onclick="switchModalTab('create')">Créer un Hub</div>
+      <div class="modal-tab" onclick="switchModalTab('join')">Rejoindre un Hub</div>
+    </div>
+
+    <div id="modal-create">
+      <div class="modal-field">
+        <label>Nom du Hub</label>
+        <input type="text" id="hub-name" placeholder="Mon Hub Cyber">
+      </div>
+      <div class="modal-field">
+        <label>Icône (optionnel)</label>
+        <input type="text" id="hub-icon" placeholder="N">
+      </div>
+      <button class="modal-btn" onclick="createHub()">Créer le Hub</button>
+    </div>
+
+    <div id="modal-join" style="display:none">
+      <div class="modal-field">
+        <label>Code d'invitation</label>
+        <input type="text" id="invite-code" placeholder="ABCD1234">
+      </div>
+      <button class="modal-btn" onclick="joinHub()">Rejoindre le Hub</button>
+    </div>
+
+    <div id="modal-error" class="modal-error"></div>
+  </div>
+</div>
+
 <div id="app">
   <div class="hubs" id="servers-list">
     <div class="hub-item active">
@@ -567,23 +737,27 @@
     </div>
     <div class="hub-sep"></div>
     <div class="hub-item">
-      <div class="hub-icon" title="Créer un hub" onclick="toast('Bientôt disponible !')">+</div>
+      <div class="hub-icon" title="Créer/Rejoindre un Hub" onclick="openHubModal()">+</div>
     </div>
   </div>
 
   <div class="sidebar">
-    <div class="sidebar-header">Nexus Core</div>
+    <div class="sidebar-header">
+      <span id="active-server-name">Nexus Core</span>
+      <button class="invite-btn" onclick="showInviteCode()">INVITER</button>
+    </div>
     <div class="channels-list" id="channels-list"></div>
   </div>
 
   <div class="chat">
     <div class="chat-header">
-      <span class="icon">●</span>
+      <span class="icon">◯</span>
       <span id="active-channel-name">général</span>
       <div class="chat-profile">
         <div class="profile-avatar" id="my-avatar-btn">
           <img id="my-avatar" src="" alt="" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
         </div>
+        <span class="profile-username" id="my-username"></span>
       </div>
     </div>
     <div id="chat-area"></div>
@@ -610,9 +784,11 @@
 <audio id="snd-in" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3" preload="auto"></audio>
 
 <script>
-let currentUser = null, currentChannel = null, lastMsgUser = null, typingTimeout = null;
+let currentUser = null, currentServer = null, currentChannel = null, lastMsgUser = null, typingTimeout = null;
 const socket = io();
 const typingUsers = new Map();
+
+// ——— Auth —————————————————————————————————————————————————————————————————————————
 
 function switchTab(tab) {
   document.querySelectorAll('.auth-tab').forEach((t, i) => t.classList.toggle('active', (i===0)===(tab==='login')));
@@ -649,11 +825,98 @@ async function authRequest(url, body) {
 
 function doLogout() { localStorage.removeItem('nexus_token'); location.reload(); }
 
+// ——— Hub Modal —————————————————————————————————————————————————————————————————————
+
+function openHubModal() {
+  document.getElementById('hub-modal').classList.add('visible');
+}
+
+function closeHubModal() {
+  document.getElementById('hub-modal').classList.remove('visible');
+  document.getElementById('modal-error').textContent = '';
+}
+
+function switchModalTab(tab) {
+  document.querySelectorAll('.modal-tab').forEach((t, i) => t.classList.toggle('active', (i===0)===(tab==='create')));
+  document.getElementById('modal-create').style.display = tab==='create' ? '' : 'none';
+  document.getElementById('modal-join').style.display   = tab==='join'   ? '' : 'none';
+}
+
+async function createHub() {
+  const name = document.getElementById('hub-name').value.trim();
+  const icon = document.getElementById('hub-icon').value.trim() || null;
+  if (!name) return document.getElementById('modal-error').textContent = 'Nom requis';
+
+  try {
+    const res = await fetch('/api/servers', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': currentUser.id
+      },
+      body: JSON.stringify({ name, icon })
+    });
+    const data = await res.json();
+    if (!res.ok) return document.getElementById('modal-error').textContent = data.error || 'Erreur inconnue';
+    closeHubModal();
+    await loadServers();
+    toast(`Hub créé ! Code d'invitation: ${data.inviteCode}`);
+  } catch { document.getElementById('modal-error').textContent = 'Erreur serveur'; }
+}
+
+async function joinHub() {
+  const code = document.getElementById('invite-code').value.trim().toUpperCase();
+  if (!code) return document.getElementById('modal-error').textContent = 'Code requis';
+
+  try {
+    const res = await fetch('/api/servers/join', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': currentUser.id
+      },
+      body: JSON.stringify({ inviteCode: code })
+    });
+    const data = await res.json();
+    if (!res.ok) return document.getElementById('modal-error').textContent = data.error || 'Erreur inconnue';
+    closeHubModal();
+    await loadServers();
+    toast('Hub rejoint avec succès !');
+  } catch { document.getElementById('modal-error').textContent = 'Erreur serveur'; }
+}
+
+async function showInviteCode() {
+  if (!currentServer) return;
+
+  try {
+    const res = await fetch(`/api/servers/${currentServer.id}/invites`, {
+      headers: { 'X-User-Id': currentUser.id }
+    });
+    const data = await res.json();
+    if (!res.ok) return toast(data.error || 'Erreur inconnue');
+
+    if (data.length === 0) {
+      const createRes = await fetch(`/api/servers/${currentServer.id}/invites`, {
+        method: 'POST',
+        headers: { 'X-User-Id': currentUser.id }
+      });
+      const createData = await createRes.json();
+      if (!createRes.ok) return toast(createData.error || 'Erreur inconnue');
+      toast(`Code d'invitation: ${createData.code}`);
+    } else {
+      toast(`Code d'invitation: ${data[0].code}`);
+    }
+  } catch { toast('Erreur serveur'); }
+}
+
+// ——— App ———————————————————————————————————————————————————————————————————————————
+
 async function startApp(user) {
   currentUser = user;
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('app').classList.add('visible');
   document.getElementById('my-avatar').src = user.avatar;
+  document.getElementById('my-username').textContent = user.username;
   document.getElementById('my-avatar-btn').classList.toggle('offline', user.status === 'offline');
   document.getElementById('snd-in').play().catch(()=>{});
   socket.emit('auth', { token: localStorage.getItem('nexus_token') });
@@ -661,10 +924,41 @@ async function startApp(user) {
 }
 
 async function loadServers() {
-  const res     = await fetch('/api/servers');
-  const servers = await res.json();
-  if (!servers.length) return;
-  const srv = servers[0];
+  try {
+    const res = await fetch('/api/servers', { headers: { 'X-User-Id': currentUser.id } });
+    const servers = await res.json();
+    if (!servers.length) return;
+
+    renderServers(servers);
+    currentServer = servers[0];
+    document.getElementById('active-server-name').textContent = currentServer.name;
+    renderChannels(currentServer.channels);
+    const firstText = currentServer.channels.find(c => c.type === 'text');
+    if (firstText) joinChannel(firstText);
+  } catch { toast('Erreur lors du chargement des hubs'); }
+}
+
+function renderServers(servers) {
+  const list = document.getElementById('servers-list');
+  list.innerHTML = '';
+
+  servers.forEach((srv, index) => {
+    const item = document.createElement('div');
+    item.className = `hub-item ${index === 0 ? 'active' : ''}`;
+    item.innerHTML = `
+      <div class="hub-pill"></div>
+      <div class="hub-icon" title="${srv.name}">${srv.icon || srv.name.charAt(0)}</div>
+    `;
+    item.onclick = () => switchServer(srv);
+    list.insertBefore(item, list.children[list.children.length - 2]);
+  });
+}
+
+function switchServer(srv) {
+  currentServer = srv;
+  document.getElementById('active-server-name').textContent = srv.name;
+  document.querySelectorAll('.hub-item').forEach(el => el.classList.remove('active'));
+  event.currentTarget.classList.add('active');
   renderChannels(srv.channels);
   const firstText = srv.channels.find(c => c.type === 'text');
   if (firstText) joinChannel(firstText);
@@ -679,7 +973,7 @@ function renderChannels(channels) {
   texts.forEach(ch => {
     const el = document.createElement('div');
     el.className = 'ch-item'; el.id = `ch-${ch.id}`;
-    el.innerHTML = `<span class="icon">●</span> ${ch.name}`;
+    el.innerHTML = `<span class="icon">◯</span> ${ch.name}`;
     el.onclick = () => joinChannel(ch);
     list.appendChild(el);
   });
@@ -704,6 +998,8 @@ function joinChannel(ch) {
   typingUsers.clear();
   socket.emit('join-channel', { channelId: ch.id });
 }
+
+// ——— Socket Events ———————————————————————————————————————————————————————————————
 
 socket.on('auth-success', u => console.log('✅ Socket auth', u.username));
 socket.on('auth-error',   e => console.error('Socket auth error:', e));
@@ -734,6 +1030,8 @@ socket.on('user-stop-typing', ({ userId }) => {
   typingUsers.delete(userId);
   updateTypingIndicator();
 });
+
+// ——— UI Helpers —————————————————————————————————————————————————————————————————
 
 function updateTypingIndicator() {
   const indicator = document.getElementById('typing-indicator');
@@ -792,14 +1090,20 @@ function toast(msg) {
   setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-// Auto-login
+// ——— Auto-login —————————————————————————————————————————————————————————————————————
 (async () => {
   const token = localStorage.getItem('nexus_token');
   if (!token) return;
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
     if (payload.exp * 1000 < Date.now()) { localStorage.removeItem('nexus_token'); return; }
-    const res  = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({_token:token}) });
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ _token: token })
+    });
+    const data = await res.json();
+    if (res.ok) startApp(data.user);
   } catch {}
 })();
 </script>

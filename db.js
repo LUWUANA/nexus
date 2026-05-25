@@ -15,8 +15,7 @@ const db = new Database(DB_PATH);
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
-// ─── Schéma ──────────────────────────────────────────────────────────────────
-
+// ————————— Schéma ————————————————————————————————————————————————————————————————————————
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
     id        INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -61,10 +60,18 @@ db.exec(`
     joined_at  TEXT    NOT NULL DEFAULT (datetime('now')),
     PRIMARY KEY (server_id, user_id)
   );
+
+  CREATE TABLE IF NOT EXISTS invites (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    code       TEXT    NOT NULL UNIQUE,
+    server_id  INTEGER NOT NULL REFERENCES servers(id) ON DELETE CASCADE,
+    created_by INTEGER NOT NULL REFERENCES users(id),
+    created_at TEXT    NOT NULL DEFAULT (datetime('now')),
+    expires_at TEXT
+  );
 `);
 
-// ─── Seed : serveur par défaut ────────────────────────────────────────────────
-
+// ————————— Seed : serveur par défaut ———————————————————————————————————————————————————————
 const seedServer = db.prepare(`SELECT id FROM servers WHERE slug = 'nexus-core'`).get();
 if (!seedServer) {
   // Créer un user système pour posséder le serveur par défaut
@@ -89,8 +96,7 @@ if (!seedServer) {
   console.log('✅ Serveur par défaut créé');
 }
 
-// ─── Requêtes préparées ────────────────────────────────────────────────────────
-
+// ————————— Requêtes préparées —————————————————————————————————————————————————————————————
 module.exports = {
   db,
 
@@ -102,10 +108,16 @@ module.exports = {
   getUserByUsername: db.prepare(`SELECT * FROM users WHERE username = ?`),
   getUserById: db.prepare(`SELECT id, username, pronouns, avatar, nitro, status, ghost FROM users WHERE id = ?`),
   updateUserStatus: db.prepare(`UPDATE users SET status = ? WHERE id = ?`),
+  updateUserAvatar: db.prepare(`UPDATE users SET avatar = ? WHERE id = ?`),
 
   // Servers
   getServers: db.prepare(`SELECT * FROM servers`),
+  getServerById: db.prepare(`SELECT * FROM servers WHERE id = ?`),
   getServerBySlug: db.prepare(`SELECT * FROM servers WHERE slug = ?`),
+  createServer: db.prepare(`
+    INSERT INTO servers (name, slug, owner_id, icon)
+    VALUES (@name, @slug, @owner_id, @icon)
+  `),
 
   // Channels
   getChannelsByServer: db.prepare(`SELECT * FROM channels WHERE server_id = ? ORDER BY position`),
@@ -129,4 +141,18 @@ module.exports = {
   joinServer: db.prepare(`
     INSERT OR IGNORE INTO server_members (server_id, user_id) VALUES (?, ?)
   `),
+  getServerMembers: db.prepare(`
+    SELECT u.id, u.username, u.avatar, u.status
+    FROM users u
+    JOIN server_members m ON u.id = m.user_id
+    WHERE m.server_id = ?
+  `),
+
+  // Invites
+  createInvite: db.prepare(`
+    INSERT INTO invites (code, server_id, created_by)
+    VALUES (@code, @server_id, @created_by)
+  `),
+  getInviteByCode: db.prepare(`SELECT * FROM invites WHERE code = ?`),
+  getInvitesByServer: db.prepare(`SELECT * FROM invites WHERE server_id = ?`),
 };
