@@ -34,7 +34,7 @@
       overflow: hidden;
     }
 
-    /* ——— Auth ————————————————————————————————————————————————————————————————————————————— */
+    /* ── Auth ───────────────────────────────────────────────────── */
     #auth-screen {
       position: fixed; inset: 0;
       background: var(--bg);
@@ -80,7 +80,7 @@
 
     #auth-error { color: var(--red); font-size: .85rem; text-align: center; margin-top: 12px; min-height: 20px; }
 
-    /* ——— App ——————————————————————————————————————————————————————————————————————————————— */
+    /* ── App ────────────────────────────────────────────────────── */
     #app { display: none; grid-template-columns: 72px 240px 1fr; height: 100vh; }
     #app.visible { display: grid; }
 
@@ -136,35 +136,6 @@
     .msg-group p { line-height: 1.4; word-break: break-word; }
     .msg-continued { padding: 1px 0 1px 56px; }
     .msg-continued:hover, .msg-group:hover { background: rgba(0,0,0,.1); border-radius: 4px; }
-
-    .typing-indicator {
-      padding: 8px 20px 0;
-      display: flex; align-items: center; gap: 8px;
-      font-size: 0.85rem; color: var(--text-muted);
-      opacity: 0; transition: opacity 0.3s;
-      height: 20px;
-    }
-    .typing-indicator.visible {
-      opacity: 1;
-    }
-    .typing-indicator .avatar {
-      width: 20px; height: 20px; border-radius: 50%;
-    }
-    .typing-indicator .dots {
-      display: flex; gap: 2px;
-    }
-    .typing-indicator .dot {
-      width: 6px; height: 6px; background: var(--text-muted); border-radius: 50%;
-      animation: typingAnimation 1.4s infinite ease-in-out;
-    }
-    .typing-indicator .dot:nth-child(1) { animation-delay: 0s; }
-    .typing-indicator .dot:nth-child(2) { animation-delay: 0.2s; }
-    .typing-indicator .dot:nth-child(3) { animation-delay: 0.4s; }
-
-    @keyframes typingAnimation {
-      0%, 60%, 100% { transform: translateY(0); }
-      30% { transform: translateY(-4px); }
-    }
 
     .input-bar { padding: 0 20px 24px; }
     .input-wrap { display: flex; align-items: center; background: var(--bg-input); border-radius: var(--radius); padding: 0 16px; }
@@ -249,20 +220,9 @@
       <span id="active-channel-name">général</span>
     </div>
     <div id="chat-area"></div>
-    <div class="typing-indicator" id="typing-indicator">
-      <img class="avatar" id="typing-avatar" src="" alt="">
-      <span id="typing-username"></span>
-      <span class="pronouns" id="typing-pronouns"></span>
-      <span> est en train d'écrire</span>
-      <div class="dots">
-        <div class="dot"></div>
-        <div class="dot"></div>
-        <div class="dot"></div>
-      </div>
-    </div>
     <div class="input-bar">
       <div class="input-wrap">
-        <input type="text" id="chat-input" placeholder="Envoyer un message..." onkeydown="handleKey(event)" oninput="handleTyping()">
+        <input type="text" id="chat-input" placeholder="Envoyer un message..." onkeydown="handleKey(event)">
       </div>
     </div>
   </div>
@@ -272,9 +232,8 @@
 <audio id="snd-in" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3" preload="auto"></audio>
 
 <script>
-let currentUser = null, currentChannel = null, lastMsgUser = null, typingTimeout = null;
+let currentUser = null, currentChannel = null, lastMsgUser = null;
 const socket = io();
-const typingUsers = new Map();
 
 function switchTab(tab) {
   document.querySelectorAll('.auth-tab').forEach((t, i) => t.classList.toggle('active', (i===0)===(tab==='login')));
@@ -363,8 +322,6 @@ function joinChannel(ch) {
   const el = document.getElementById(`ch-${ch.id}`);
   if (el) el.classList.add('active');
   document.getElementById('chat-area').innerHTML = '';
-  document.getElementById('typing-indicator').classList.remove('visible');
-  typingUsers.clear();
   socket.emit('join-channel', { channelId: ch.id });
 }
 
@@ -383,30 +340,6 @@ socket.on('new-msg', msg => { renderMsg(msg); scrollToBottom(); });
 socket.on('user-status', ({ username, status }) => {
   toast(`${username} est ${status === 'online' ? 'en ligne 🟢' : 'hors ligne'}`);
 });
-
-socket.on('user-typing', ({ userId, username, pronouns }) => {
-  if (userId === currentUser.id) return;
-  typingUsers.set(userId, { username, pronouns });
-  updateTypingIndicator();
-});
-
-socket.on('user-stop-typing', ({ userId }) => {
-  typingUsers.delete(userId);
-  updateTypingIndicator();
-});
-
-function updateTypingIndicator() {
-  const indicator = document.getElementById('typing-indicator');
-  if (typingUsers.size === 0) {
-    indicator.classList.remove('visible');
-    return;
-  }
-  const [userId, user] = typingUsers.entries().next().value;
-  document.getElementById('typing-username').textContent = user.username;
-  document.getElementById('typing-pronouns').textContent = user.pronouns;
-  document.getElementById('typing-avatar').src = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(user.username)}`;
-  indicator.classList.add('visible');
-}
 
 function renderMsg(msg) {
   const area = document.getElementById('chat-area');
@@ -443,17 +376,7 @@ function handleKey(e) {
     if (!text || !currentChannel) return;
     socket.emit('send-msg', { channelId: currentChannel.id, content: text });
     e.target.value = '';
-    socket.emit('typing-stop', { channelId: currentChannel.id });
   }
-}
-
-function handleTyping() {
-  if (!currentChannel) return;
-  socket.emit('typing-start', { channelId: currentChannel.id });
-  clearTimeout(typingTimeout);
-  typingTimeout = setTimeout(() => {
-    socket.emit('typing-stop', { channelId: currentChannel.id });
-  }, 3000);
 }
 
 function toast(msg) {

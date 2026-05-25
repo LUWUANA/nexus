@@ -27,10 +27,10 @@ const JWT_SECRET = process.env.JWT_SECRET || 'nexus-dev-secret-CHANGE-ME';
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static('public'));
 
-// ——— Map : socketId → userId ————————————————————————————————————————————————————————————————
+// ─── Map : socketId → userId ──────────────────────────────────────────────────
 const sessions = new Map();
 
-// ——— Helper JWT ————————————————————————————————————————————————————————————————————————
+// ─── Helper JWT ───────────────────────────────────────────────────────────────
 function signToken(userId) {
   return jwt.sign({ sub: userId }, JWT_SECRET, { expiresIn: '7d' });
 }
@@ -40,7 +40,7 @@ function verifyToken(token) {
   catch { return null; }
 }
 
-// ——— REST : Auth ————————————————————————————————————————————————————————————————————————
+// ─── REST : Auth ──────────────────────────────────────────────────────────────
 
 app.post('/api/register', (req, res) => {
   const { username, password, pronouns } = req.body;
@@ -82,7 +82,7 @@ app.post('/api/login', (req, res) => {
   res.json({ token, user });
 });
 
-// ——— REST : Données —————————————————————————————————————————————————————————————————————
+// ─── REST : Données ───────────────────────────────────────────────────────────
 
 app.get('/api/servers', (req, res) => {
   const servers = getServers.all();
@@ -98,7 +98,7 @@ app.get('/api/channels/:id/messages', (req, res) => {
   res.json(messages.reverse());
 });
 
-// ——— Proxy GitHub pour l'AI Updater ————————————————————————————————————————————————————————
+// ─── Proxy GitHub pour l'AI Updater ──────────────────────────────────────────
 // Évite les problèmes CORS en passant par le serveur Node.js
 
 app.post('/api/github-proxy', (req, res) => {
@@ -138,7 +138,7 @@ app.post('/api/github-proxy', (req, res) => {
   proxyReq.end();
 });
 
-// ——— Socket.io —————————————————————————————————————————————————————————————————————————
+// ─── Socket.io ────────────────────────────────────────────────────────────────
 
 io.on('connection', (socket) => {
   console.log(`🔌 Connexion : ${socket.id}`);
@@ -172,27 +172,6 @@ io.on('connection', (socket) => {
 
     const history = getMessages.all(channelId).reverse();
     socket.emit('channel-history', { channelId, messages: history });
-  });
-
-  socket.on('typing-start', ({ channelId }) => {
-    const session = sessions.get(socket.id);
-    if (!session || !session.currentChannel || session.currentChannel !== channelId) return;
-    const user = getUserById.get(session.userId);
-    socket.to(`channel:${channelId}`).emit('user-typing', {
-      userId: session.userId,
-      username: user.username,
-      pronouns: user.pronouns,
-      channelId
-    });
-  });
-
-  socket.on('typing-stop', ({ channelId }) => {
-    const session = sessions.get(socket.id);
-    if (!session || !session.currentChannel || session.currentChannel !== channelId) return;
-    socket.to(`channel:${channelId}`).emit('user-stop-typing', {
-      userId: session.userId,
-      channelId
-    });
   });
 
   socket.on('send-msg', ({ channelId, content }) => {
@@ -235,7 +214,7 @@ io.on('connection', (socket) => {
   });
 });
 
-// ——— Démarrage ———————————————————————————————————————————————————————————————————————————
+// ─── Démarrage ────────────────────────────────────────────────────────────────
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 NEXUS V2 — port ${PORT}`);
