@@ -23,8 +23,8 @@ header p{color:var(--muted);font-size:.95rem;margin-top:6px;}
 .card h3{font-size:1rem;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
 .card h3 .badge{font-size:.7rem;background:rgba(110,87,255,.2);color:var(--neon);padding:2px 8px;border-radius:20px;font-weight:500;}
 label{display:block;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px;}
-input,textarea,select{width:100%;background:var(--bg-input);border:1.5px solid transparent;border-radius:var(--radius);color:var(--text);font-family:inherit;font-size:.95rem;padding:12px 14px;outline:none;transition:border-color .2s;}
-input:focus,textarea:focus,select:focus{border-color:var(--violet);}
+input,textarea{width:100%;background:var(--bg-input);border:1.5px solid transparent;border-radius:var(--radius);color:var(--text);font-family:inherit;font-size:.95rem;padding:12px 14px;outline:none;transition:border-color .2s;}
+input:focus,textarea:focus{border-color:var(--violet);}
 textarea{resize:vertical;min-height:100px;line-height:1.5;}
 input::placeholder,textarea::placeholder{color:var(--muted);}
 .field{margin-bottom:18px;}
@@ -64,12 +64,11 @@ input::placeholder,textarea::placeholder{color:var(--muted);}
 .suggestions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
 .sug{background:var(--bg-input);border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:.82rem;cursor:pointer;color:var(--muted);transition:.2s;}
 .sug:hover{border-color:var(--violet);color:var(--text);}
-.tag{font-size:.72rem;padding:2px 8px;border-radius:10px;font-weight:600;}
-.tag-warn{background:rgba(240,177,50,.15);color:var(--amber);}
+.tag-warn{background:rgba(240,177,50,.15);color:var(--amber);font-size:.72rem;padding:2px 8px;border-radius:10px;font-weight:600;}
 </style>
 </head>
 <body>
-<h2 class="sr-only">NEXUS AI Updater — Générateur de Pull Requests par IA</h2>
+<h2 class="sr-only">NEXUS AI Updater</h2>
 <div class="container">
 
 <header>
@@ -109,7 +108,7 @@ input::placeholder,textarea::placeholder{color:var(--muted);}
   <h3>📝 Ta demande</h3>
   <div class="field">
     <label>Décris la fonctionnalité ou le fix</label>
-    <textarea id="request" placeholder="Ex: Ajoute un système de réactions emoji aux messages (👍 ❤️ 🎉). Le compteur doit s'afficher sous le message et se mettre à jour en temps réel via Socket.io."></textarea>
+    <textarea id="request" placeholder="Ex: Ajoute un indicateur 'est en train d'écrire...' en temps réel via Socket.io."></textarea>
   </div>
   <div style="margin-bottom:18px;">
     <label>Suggestions rapides</label>
@@ -144,9 +143,10 @@ input::placeholder,textarea::placeholder{color:var(--muted);}
 </div>
 
 </div>
-
 <script>
-const CODEBASE_FILES = ['server.js','db.js','public/index.html','package.json'];
+// On envoie uniquement les noms de fichiers, pas le contenu complet
+// pour réduire la taille du prompt et éviter les JSON tronqués
+const CODEBASE_FILES = ['server.js', 'db.js', 'package.json'];
 
 function loadConfig(){
   document.getElementById('mistral-key').value  = localStorage.getItem('nx_mkey')||'';
@@ -185,20 +185,12 @@ function setStep(n, state){
 }
 
 async function githubReq(token, repo, method, path, body){
-  // Passer par le proxy local pour éviter les restrictions CORS du navigateur
   const r = await fetch('/api/github-proxy', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      method,
-      path: `/repos/${repo}${path}`,
-      token,
-      body
-    })
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, method, path: `/repos/${repo}${path}`, body: body || null }),
   });
-  return {status: r.status, body: await r.json()};
+  return { status: r.status, body: await r.json() };
 }
 
 async function runUpdater(){
@@ -218,7 +210,7 @@ async function runUpdater(){
   document.getElementById('pr-preview').classList.remove('show');
 
   try {
-    // ── Step 1 : Lire le codebase depuis GitHub ───────────────────────────
+    // ── Step 1 : Lire le codebase via proxy ──────────────────────────────
     setStep(1);
     log('Lecture du codebase depuis GitHub...');
     const codeContext = [];
@@ -226,28 +218,28 @@ async function runUpdater(){
       try{
         const r = await githubReq(ghToken, ghRepo, 'GET', `/contents/${file}`);
         if(r.status === 200){
-          const content = atob(r.body.content.replace(/\n/g,''));
+          // Tronquer chaque fichier à 3000 chars pour ne pas dépasser le context
+          const full = atob(r.body.content.replace(/\n/g,''));
+          const content = full.length > 3000 ? full.slice(0, 3000) + '\n// ... (tronqué)' : full;
           codeContext.push(`### ${file}\n\`\`\`\n${content}\n\`\`\``);
           log(`  ✓ ${file}`, 'ok');
         } else {
-          log(`  ⚠ ${file} renvoie un statut ${r.status}`, 'warn');
+          log(`  ⚠ ${file} : ${r.body.message}`, 'warn');
         }
-      }catch(e){ log(`  ⚠ ${file} ignoré`, 'warn'); }
+      }catch(e){ log(`  ⚠ ${file} ignoré : ${e.message}`, 'warn'); }
     }
 
-    if(codeContext.length === 0){
-      throw new Error("Aucun fichier n'a pu être lu depuis GitHub. Vérifie le proxy, le repo et le token.");
-    }
+    if(codeContext.length === 0) throw new Error('Aucun fichier lu — vérifie le token GitHub et le nom du repo');
 
     // ── Step 2 : Mistral génère le code ──────────────────────────────────
     setStep(2);
     log('Appel Mistral API...', 'info');
 
     const systemPrompt = `Tu es un expert Node.js/Express/Socket.io qui maintient NEXUS, un clone Discord open-source inclusif.
-Tu reçois une demande de modification et le code source complet.
-Tu réponds UNIQUEMENT avec un objet JSON valide (pas de markdown, pas d'explication, pas de backticks) de cette forme exacte :
-{"branch_name":"feature/nom-kebab","pr_title":"feat: titre","pr_body":"## Description\\n...","files":{"server.js":"contenu complet"},"commit_message":"feat: ..."}
-N'inclus dans files QUE les fichiers modifiés, avec leur contenu COMPLET. Respecte l'architecture existante.`;
+Tu reçois une demande et un extrait du code source.
+Tu réponds UNIQUEMENT avec un objet JSON valide, sans markdown ni backticks, de cette forme :
+{"branch_name":"feature/nom-kebab","pr_title":"feat: titre court","pr_body":"## Description\\nCe que fait ce changement.","files":{"server.js":"// contenu complet du fichier modifié"},"commit_message":"feat: description courte"}
+IMPORTANT : N'inclus que les fichiers réellement modifiés. Le contenu doit être le fichier COMPLET et valide.`;
 
     const aiRes = await fetch('https://api.mistral.ai/v1/chat/completions', {
       method: 'POST',
@@ -259,25 +251,38 @@ N'inclus dans files QUE les fichiers modifiés, avec leur contenu COMPLET. Respe
         model: 'mistral-large-latest',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Codebase actuel :\n\n${codeContext.join('\n\n')}\n\n---\n\nDemande : ${request}` }
+          { role: 'user', content: `Code source :\n\n${codeContext.join('\n\n')}\n\n---\n\nDemande : ${request}` }
         ],
-        max_tokens: 16384,
-        temperature: 0.1,
+        max_tokens: 16000,
+        temperature: 0.05,
         response_format: { type: 'json_object' },
       }),
     });
 
     if(!aiRes.ok){ throw new Error(`Mistral API ${aiRes.status} : ${await aiRes.text()}`); }
     const aiData = await aiRes.json();
+
+    if(aiData.choices[0].finish_reason === 'length'){
+      throw new Error('Réponse tronquée par Mistral — essaie une demande plus simple');
+    }
+
     const raw = aiData.choices[0].message.content.trim();
 
     let changes;
-    try{ changes = JSON.parse(raw); }
-    catch(e){
+    try {
+      changes = JSON.parse(raw);
+    } catch(e) {
+      // Tentative de récupération si JSON partiel
       const match = raw.match(/\{[\s\S]*\}/);
-      if(match) changes = JSON.parse(match[0]);
-      else throw new Error('Réponse Mistral non parseable');
+      if(match) {
+        try { changes = JSON.parse(match[0]); }
+        catch { throw new Error('JSON invalide — réessaie avec une demande plus simple'); }
+      } else {
+        throw new Error('Réponse Mistral non parseable — réessaie');
+      }
     }
+
+    if(!changes.branch_name || !changes.files) throw new Error('Réponse Mistral incomplète');
 
     log(`Branche : ${changes.branch_name}`, 'ok');
     log(`Fichiers : ${Object.keys(changes.files).join(', ')}`, 'ok');
@@ -303,9 +308,10 @@ N'inclus dans files QUE les fichiers modifiés, avec leur contenu COMPLET. Respe
       const fileRes = await githubReq(ghToken, ghRepo, 'GET', `/contents/${filePath}?ref=${changes.branch_name}`);
       const fileSha = fileRes.status === 200 ? fileRes.body.sha : undefined;
 
+      const encodedContent = btoa(unescape(encodeURIComponent(content)));
       const commitRes = await githubReq(ghToken, ghRepo, 'PUT', `/contents/${filePath}`, {
         message: changes.commit_message,
-        content: btoa(unescape(encodeURIComponent(content))),
+        content: encodedContent,
         branch:  changes.branch_name,
         ...(fileSha ? {sha: fileSha} : {}),
       });
@@ -350,4 +356,4 @@ N'inclus dans files QUE les fichiers modifiés, avec leur contenu COMPLET. Respe
 loadConfig();
 </script>
 </body>
-</html>$
+</html>
