@@ -68,6 +68,22 @@ function generateInviteCode() {
   return crypto.randomBytes(4).toString('hex').toUpperCase();
 }
 
+function getUserBadges(userId) {
+  const user = getUserById.get(userId);
+  if (!user) return [];
+  
+  const badges = [];
+  const createdAt = new Date(user.created_at);
+  const now = new Date();
+  const daysSinceCreation = Math.floor((now - createdAt) / (1000 * 60 * 60 * 24));
+  
+  if (daysSinceCreation >= 365) badges.push('Ancien·ne');
+  if (user.nitro) badges.push('Nitro');
+  if (user.id === 1) badges.push('Fondateur');
+  
+  return badges;
+}
+
 // REST: Auth
 app.post('/api/register', (req, res) => {
   const { username, password, pronouns } = req.body;
@@ -83,118 +99,82 @@ app.post('/api/register', (req, res) => {
   let result;
   try {
     result = createUser.run({ username, password: hash, pronouns: pronouns || 'iel', avatar });
-    createUserProfile.run({ user_id: result.lastInsertRowid, bio: '', custom_status: '' });
-    res.json({ token: signToken(result.lastInsertRowid), userId: result.lastInsertRowid });
+    createUserProfile.run({ user_id: result.lastInsertRowid, bio: '', banner_color: '#6a0dad', badges: JSON.stringify([]) });
   } catch (err) {
-    res.status(500).json({ error: 'Erreur serveur' });
-  }
-});
-
-app.post('/api/login', (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) return res.status(400).json({ error: 'Pseudo et mot de passe requis' });
-
-  const user = getUserByUsername.get(username);
-  if (!user || !bcrypt.compareSync(password, user.password)) {
-    return res.status(401).json({ error: 'Identifiants invalides' });
+    return res.status(500).json({ error: 'Erreur serveur' });
   }
 
-  res.json({ token: signToken(user.id), userId: user.id });
+  const token = signToken(result.lastInsertRowid);
+  res.json({ token, userId: result.lastInsertRowid });
 });
 
-// REST: User Status
-app.post('/api/user/status', (req, res) => {
-  const { token, status, customStatus } = req.body;
+// REST: Profile
+app.get('/api/profile/:userId', (req, res) => {
+  const { userId } = req.params;
+  const profile = getUserProfile.get(userId);
+  if (!profile) return res.status(404).json({ error: 'Profil non trouvé' });
+  
+  const user = getUserById.get(userId);
+  if (!user) return res.status(404).json({ error: 'Utilisateur non trouvé' });
+  
+  const badges = [...JSON.parse(profile.badges || '[]'), ...getUserBadges(userId)];
+  res.json({ ...profile, badges, username: user.username, avatar: user.avatar, pronouns: user.pronouns });
+});
+
+app.post('/api/profile', (req, res) => {
+  const { token, bio, banner_color, banner_image } = req.body;
   const payload = verifyToken(token);
   if (!payload) return res.status(401).json({ error: 'Token invalide' });
-
+  
   try {
-    updateUserStatus.run({ status, id: payload.sub });
-    if (customStatus !== undefined) {
-      updateUserProfile.run({ custom_status: customStatus, user_id: payload.sub });
-    }
+    updateUserProfile.run({ bio, banner_color, banner_image, user_id: payload.sub });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
-// Socket.io
-io.use((socket, next) => {
-  const token = socket.handshake.auth.token;
-  const payload = verifyToken(token);
-  if (!payload) return next(new Error('Authentication failed'));
-
-  socket.userId = payload.sub;
-  next();
+// Soundboard
+app.get('/api/soundboard', (req, res) => {
+  res.json({
+    sounds: [
+      { name: 'Connexion', url: 'https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3' },
+      { name: 'Déconnexion', url: 'https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-223.mp3' },
+      { name: 'Notification', url: 'https://assets.mixkit.co/sfx/preview/mixkit-positive-notification-951.mp3' },
+      { name: 'Applaudissements', url: 'https://assets.mixkit.co/sfx/preview/mixkit-crowd-applause-461.mp3' },
+      { name: 'Rire', url: 'https://assets.mixkit.co/sfx/preview/mixkit-laughing-crowd-424.mp3' },
+      { name: 'Ambiance', url: 'https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-opener-222.mp3' }
+    ]
+  });
 });
 
+// Socket.io
 io.on('connection', (socket) => {
-  const userId = socket.userId;
+  const token = socket.handshake.auth.token;
+  const payload = verifyToken(token);
+  if (!payload) return socket.disconnect();
+  
+  const userId = payload.sub;
   const user = getUserById.get(userId);
-  const profile = getUserProfile.get(userId);
   if (!user) return socket.disconnect();
-
-  // Ajouter l'utilisateur à la liste des connectés
+  
   connectedUsers.set(userId, {
     username: user.username,
     socketId: socket.id,
-    status: user.status || 'online',
-    customStatus: profile?.custom_status || ''
+    status: user.status,
+    customStatus: user.custom_status
   });
-
-  // Notifier tout le monde du nouveau statut
-  io.emit('user-status', Array.from(connectedUsers.values()));
-
-  // Messages privés
-  socket.on('private-msg', ({ to, content }) => {
-    const receiver = connectedUsers.get(to);
-    if (!receiver) return;
-
-    const message = {
-      from: userId,
-      to,
-      content,
-      username: user.username,
-      avatar: user.avatar,
-      created_at: new Date().toISOString()
-    };
-
-    // Sauvegarder en base
-    createPrivateMessage.run({ sender_id: userId, receiver_id: to, content });
-
-    // Envoyer au destinataire
-    io.to(receiver.socketId).emit('private-msg', message);
-    // Envoyer à l'expéditeur pour confirmation
-    socket.emit('private-msg', message);
-  });
-
-  // Mise à jour du statut
-  socket.on('update-status', ({ status, customStatus }) => {
-    if (status) updateUserStatus.run({ status, id: userId });
-    if (customStatus !== undefined) {
-      updateUserProfile.run({ custom_status: customStatus, user_id: userId });
-    }
-
-    // Mettre à jour la liste locale
-    const userData = connectedUsers.get(userId);
-    if (userData) {
-      if (status) userData.status = status;
-      if (customStatus !== undefined) userData.customStatus = customStatus;
-      connectedUsers.set(userId, userData);
-    }
-
-    // Notifier tout le monde
-    io.emit('user-status', Array.from(connectedUsers.values()));
-  });
-
+  
+  io.emit('user_connected', { userId, username: user.username, status: user.status });
+  
   socket.on('disconnect', () => {
     connectedUsers.delete(userId);
-    io.emit('user-status', Array.from(connectedUsers.values()));
+    io.emit('user_disconnected', { userId });
+  });
+  
+  socket.on('play_sound', ({ soundUrl }) => {
+    socket.broadcast.emit('play_sound', { soundUrl, userId });
   });
 });
 
-// Démarrer le serveur
-server.listen(PORT, () => {
-  console.log(`NEXUS opérationnel sur le port ${PORT}`);
-});
+server.listen(PORT, () => console.log(`NEXUS démarré sur le port ${PORT}`));

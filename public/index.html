@@ -3,485 +3,396 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NEXUS — Clone Discord Ultra-Inclusif</title>
+  <title>NEXUS — Clone Discord Inclusif</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
-      --deep-purple: #2d1b69;
-      --neon-purple: #9d00ff;
-      --neon-blue: #00d4ff;
-      --dark-bg: #120f1a;
-      --light-text: #e0e0e0;
-      --online: #3ba55d;
-      --offline: #747f8d;
+      --deep-purple: #6a0dad;
+      --neon-purple: #b19cd9;
+      --dark-bg: #1a1a2e;
+      --darker-bg: #16213e;
+      --accent: #0f3460;
     }
+    
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
+    
     body {
       background-color: var(--dark-bg);
-      color: var(--light-text);
-      display: grid;
-      grid-template-columns: 80px 240px 1fr 240px;
-      grid-template-rows: 100vh;
-      overflow: hidden;
-    }
-    /* Sidebar gauche */
-    .sidebar {
-      background-color: var(--deep-purple);
-      grid-column: 1;
+      color: white;
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 16px 0;
-      gap: 8px;
+      height: 100vh;
     }
-    .server-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background-color: var(--neon-purple);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: transform 0.2s;
-    }
-    .server-icon:hover {
-      transform: scale(1.1);
-    }
-    /* Server list */
-    .server-list {
-      grid-column: 2;
-      background-color: #1e1a3a;
-      padding: 16px 0;
-      overflow-y: auto;
-    }
-    .server-item {
-      padding: 8px 16px;
-      margin: 4px 8px;
-      border-radius: 4px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .server-item:hover {
-      background-color: rgba(157, 0, 255, 0.2);
-    }
-    /* Main content */
-    .main-content {
-      grid-column: 3;
-      display: grid;
-      grid-template-rows: 60px 1fr 68px;
-      background-color: #18152a;
-    }
-    .channel-header {
-      grid-row: 1;
-      background-color: var(--deep-purple);
-      padding: 0 16px;
-      display: flex;
-      align-items: center;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.2);
-    }
-    .messages {
-      grid-row: 2;
-      padding: 16px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .message {
-      display: flex;
-      gap: 12px;
-    }
-    .message-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background-color: var(--neon-blue);
-    }
-    .message-content {
-      flex: 1;
-    }
-    .message-username {
-      font-weight: bold;
-      color: var(--neon-blue);
-    }
-    .message-timestamp {
-      color: #747f8d;
-      font-size: 0.8rem;
-    }
-    .message-input {
-      grid-row: 3;
-      padding: 16px;
-      background-color: var(--deep-purple);
-      display: flex;
-      gap: 8px;
-    }
-    .message-input input {
-      flex: 1;
-      padding: 12px;
-      border-radius: 4px;
-      border: none;
-      background-color: #2d1b69;
-      color: var(--light-text);
-    }
-    /* Right sidebar */
-    .right-sidebar {
-      grid-column: 4;
-      background-color: #1e1a3a;
-      padding: 16px;
-      overflow-y: auto;
-    }
-    .member-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .member-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .member-item:hover {
-      background-color: rgba(157, 0, 255, 0.2);
-    }
-    .member-status {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background-color: var(--offline);
-    }
-    .member-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background-color: var(--neon-blue);
-    }
-    /* User panel */
-    .user-panel {
-      grid-column: 1 / span 3;
-      grid-row: 3;
-      background-color: var(--deep-purple);
-      padding: 8px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      border-top: 1px solid rgba(0, 0, 0, 0.2);
-    }
-    .user-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background-color: var(--neon-purple);
-    }
-    .user-info {
-      flex: 1;
-    }
-    .user-username {
-      font-weight: bold;
-    }
-    .user-status-input {
-      background-color: #2d1b69;
-      color: var(--light-text);
-      border: none;
-      border-radius: 4px;
-      padding: 4px 8px;
-      font-size: 0.8rem;
-      width: 100%;
-    }
-    /* Private messages modal */
-    .modal {
-      display: none;
+    
+    /* Profile Modal */
+    .profile-modal {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background-color: rgba(0, 0, 0, 0.7);
-      z-index: 1000;
+      background-color: rgba(0, 0, 0, 0.8);
+      display: none;
       justify-content: center;
       align-items: center;
+      z-index: 1000;
     }
-    .modal-content {
-      background-color: var(--deep-purple);
-      width: 400px;
-      max-height: 80vh;
-      border-radius: 8px;
+    
+    .profile-container {
+      background-color: var(--darker-bg);
+      border-radius: 10px;
+      width: 600px;
+      max-width: 90%;
       overflow: hidden;
-      display: flex;
-      flex-direction: column;
+      box-shadow: 0 0 20px rgba(106, 13, 173, 0.5);
     }
-    .modal-header {
-      padding: 16px;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+    
+    .profile-banner {
+      height: 150px;
+      background-color: var(--deep-purple);
+      position: relative;
       display: flex;
-      justify-content: space-between;
+      align-items: flex-end;
+      padding: 20px;
+    }
+    
+    .profile-avatar {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 4px solid var(--darker-bg);
+      object-fit: cover;
+      cursor: pointer;
+    }
+    
+    .profile-info {
+      padding: 20px;
+    }
+    
+    .profile-username {
+      font-size: 24px;
+      font-weight: bold;
+      display: flex;
       align-items: center;
+      gap: 10px;
     }
-    .modal-messages {
-      flex: 1;
-      padding: 16px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+    
+    .profile-pronouns {
+      background-color: var(--deep-purple);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 12px;
+      margin-left: 10px;
     }
-    .modal-input {
-      padding: 16px;
+    
+    .profile-bio {
+      margin: 15px 0;
+      padding: 10px;
+      background-color: rgba(106, 13, 173, 0.2);
+      border-radius: 5px;
+      min-height: 60px;
+    }
+    
+    .profile-badges {
       display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 15px 0;
+    }
+    
+    .badge {
+      background-color: var(--neon-purple);
+      color: white;
+      padding: 3px 8px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    
+    .profile-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    
+    .btn {
+      padding: 8px 15px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    
+    .btn-primary {
+      background-color: var(--deep-purple);
+      color: white;
+    }
+    
+    .btn-secondary {
+      background-color: var(--accent);
+      color: white;
+    }
+    
+    /* Soundboard */
+    .soundboard-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    
+    .soundboard-container {
+      background-color: var(--darker-bg);
+      border-radius: 10px;
+      width: 400px;
+      padding: 20px;
+      box-shadow: 0 0 20px rgba(106, 13, 173, 0.5);
+    }
+    
+    .soundboard-title {
+      font-size: 20px;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+    
+    .soundboard-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    
+    .sound-btn {
+      background-color: var(--deep-purple);
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
       gap: 8px;
     }
-    .modal-input input {
-      flex: 1;
-      padding: 12px;
-      border-radius: 4px;
-      border: none;
-      background-color: #2d1b69;
-      color: var(--light-text);
+    
+    /* Existing styles */
+    .sidebar {
+      width: 70px;
+      background-color: var(--darker-bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 0;
     }
-    .status-badge {
-      display: inline-block;
-      margin-left: 8px;
-      padding: 2px 6px;
-      background-color: rgba(157, 0, 255, 0.3);
-      border-radius: 4px;
-      font-size: 0.7rem;
+    
+    .server-icon {
+      width: 50px;
+      height: 50px;
+      background-color: var(--deep-purple);
+      border-radius: 50%;
+      margin: 5px 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+    }
+    
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .chat-header {
+      background-color: var(--darker-bg);
+      padding: 15px;
+      border-bottom: 1px solid var(--deep-purple);
+    }
+    
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    
+    .soundboard-icon {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 50px;
+      height: 50px;
+      background-color: var(--deep-purple);
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      z-index: 100;
     }
   </style>
 </head>
 <body>
-  <!-- Sidebar gauche -->
   <div class="sidebar">
-    <div class="server-icon">
-      <i class="fas fa-plus"></i>
-    </div>
-    <div class="server-icon">
-      <i class="fas fa-home"></i>
-    </div>
+    <div class="server-icon">N</div>
   </div>
-
-  <!-- Server list -->
-  <div class="server-list">
-    <div class="server-item">
-      <div class="server-icon" style="width: 32px; height: 32px; border-radius: 8px;">N</div>
-      <span>Nexus Officiel</span>
-    </div>
-  </div>
-
-  <!-- Main content -->
+  
   <div class="main-content">
-    <div class="channel-header">
-      <i class="fas fa-hashtag"></i>
-      <span>général</span>
-    </div>
-    <div class="messages" id="messages">
-      <!-- Messages will be inserted here -->
-    </div>
-    <div class="message-input">
-      <input type="text" placeholder="Envoyer un message..." id="messageInput">
-      <button id="sendMessage"><i class="fas fa-paper-plane"></i></button>
-    </div>
-  </div>
-
-  <!-- Right sidebar -->
-  <div class="right-sidebar">
-    <h3>Membres en ligne</h3>
-    <div class="member-list" id="memberList">
-      <!-- Members will be inserted here -->
-    </div>
-  </div>
-
-  <!-- User panel -->
-  <div class="user-panel">
-    <img src="" alt="Avatar" class="user-avatar" id="userAvatar">
-    <div class="user-info">
-      <div class="user-username" id="userUsername"></div>
-      <input type="text" class="user-status-input" placeholder="Définir un statut..." id="userStatusInput">
-    </div>
-    <i class="fas fa-cog"></i>
-  </div>
-
-  <!-- Private messages modal -->
-  <div class="modal" id="privateMsgModal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <span id="privateMsgUsername"></span>
-        <button id="closePrivateMsg"><i class="fas fa-times"></i></button>
-      </div>
-      <div class="modal-messages" id="privateMessages">
-        <!-- Private messages will be inserted here -->
-      </div>
-      <div class="modal-input">
-        <input type="text" placeholder="Envoyer un message privé..." id="privateMessageInput">
-        <button id="sendPrivateMessage"><i class="fas fa-paper-plane"></i></button>
+    <div class="chat-header">
+      <div class="user-info">
+        <img class="user-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=User" alt="Avatar">
+        <span>Utilisateur</span>
       </div>
     </div>
   </div>
-
+  
+  <!-- Profile Modal -->
+  <div class="profile-modal" id="profileModal">
+    <div class="profile-container">
+      <div class="profile-banner" id="profileBanner">
+        <img class="profile-avatar" id="profileAvatar" src="" alt="Avatar">
+      </div>
+      <div class="profile-info">
+        <div class="profile-username">
+          <span id="profileUsername"></span>
+          <span class="profile-pronouns" id="profilePronouns"></span>
+        </div>
+        <div class="profile-bio" id="profileBio" contenteditable="true"></div>
+        <div class="profile-badges" id="profileBadges"></div>
+        <div class="profile-actions">
+          <button class="btn btn-primary" id="saveProfileBtn">Sauvegarder</button>
+          <button class="btn btn-secondary" id="closeProfileBtn">Fermer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Soundboard Modal -->
+  <div class="soundboard-modal" id="soundboardModal">
+    <div class="soundboard-container">
+      <div class="soundboard-title">Soundboard 🎵</div>
+      <div class="soundboard-grid" id="soundboardGrid"></div>
+      <button class="btn btn-secondary" id="closeSoundboardBtn" style="margin-top: 15px; width: 100%;">Fermer</button>
+    </div>
+  </div>
+  
+  <div class="soundboard-icon" id="soundboardIcon">
+    <i class="fas fa-music"></i>
+  </div>
+  
   <script src="/socket.io/socket.io.js"></script>
   <script>
-    // Auth
-    const token = localStorage.getItem('nexus_token');
+    const socket = io({ auth: { token: localStorage.getItem('nexus_token') } });
     const userId = localStorage.getItem('nexus_userId');
-    if (!token || !userId) {
-      window.location.href = '/login.html';
-    }
-
-    const socket = io({
-      auth: { token }
-    });
-
-    // DOM elements
-    const messagesEl = document.getElementById('messages');
-    const messageInput = document.getElementById('messageInput');
-    const sendMessageBtn = document.getElementById('sendMessage');
-    const memberListEl = document.getElementById('memberList');
-    const userAvatar = document.getElementById('userAvatar');
-    const userUsername = document.getElementById('userUsername');
-    const userStatusInput = document.getElementById('userStatusInput');
-    const privateMsgModal = document.getElementById('privateMsgModal');
-    const privateMsgUsername = document.getElementById('privateMsgUsername');
-    const privateMessagesEl = document.getElementById('privateMessages');
-    const privateMessageInput = document.getElementById('privateMessageInput');
-    const sendPrivateMessageBtn = document.getElementById('sendPrivateMessage');
-    const closePrivateMsgBtn = document.getElementById('closePrivateMsg');
-
-    let currentPrivateChat = null;
-
-    // Fetch user data
-    fetch('/api/user', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-    .then(res => res.json())
-    .then(user => {
-      userAvatar.src = user.avatar;
-      userUsername.textContent = user.username;
-      if (user.customStatus) {
-        userStatusInput.value = user.customStatus;
-      }
-    });
-
-    // Messages
-    sendMessageBtn.addEventListener('click', () => {
-      const content = messageInput.value.trim();
-      if (content) {
-        socket.emit('message', { content });
-        messageInput.value = '';
-      }
-    });
-
-    messageInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        sendMessageBtn.click();
-      }
-    });
-
-    socket.on('message', (message) => {
-      const messageEl = document.createElement('div');
-      messageEl.className = 'message';
-      messageEl.innerHTML = `
-        <img src="${message.avatar}" alt="Avatar" class="message-avatar">
-        <div class="message-content">
-          <div>
-            <span class="message-username">${message.username}</span>
-            <span class="message-timestamp">${new Date(message.created_at).toLocaleTimeString()}</span>
-          </div>
-          <div>${message.content}</div>
-        </div>
-      `;
-      messagesEl.appendChild(messageEl);
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-    });
-
-    // Members list
-    socket.on('user-status', (users) => {
-      memberListEl.innerHTML = '';
-      users.forEach(user => {
-        const memberEl = document.createElement('div');
-        memberEl.className = 'member-item';
-        memberEl.innerHTML = `
-          <div class="member-status" style="background-color: ${user.status === 'online' ? 'var(--online)' : 'var(--offline)'}"></div>
-          <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(user.username)}" alt="Avatar" class="member-avatar">
-          <span>${user.username}</span>
-          ${user.customStatus ? `<span class="status-badge">${user.customStatus}</span>` : ''}
-        `;
-        memberEl.addEventListener('click', () => openPrivateChat(user));
-        memberListEl.appendChild(memberEl);
+    
+    // Profile Modal
+    const profileModal = document.getElementById('profileModal');
+    const profileAvatar = document.getElementById('profileAvatar');
+    const closeProfileBtn = document.getElementById('closeProfileBtn');
+    const saveProfileBtn = document.getElementById('saveProfileBtn');
+    
+    document.querySelector('.user-avatar').addEventListener('click', async () => {
+      const response = await fetch(`/api/profile/${userId}`);
+      const profile = await response.json();
+      
+      profileAvatar.src = profile.avatar;
+      document.getElementById('profileUsername').textContent = profile.username;
+      document.getElementById('profilePronouns').textContent = profile.pronouns;
+      document.getElementById('profileBio').textContent = profile.bio || 'Aucune bio pour le moment';
+      
+      const badgesContainer = document.getElementById('profileBadges');
+      badgesContainer.innerHTML = '';
+      profile.badges.forEach(badge => {
+        const badgeElement = document.createElement('span');
+        badgeElement.className = 'badge';
+        badgeElement.textContent = badge;
+        badgesContainer.appendChild(badgeElement);
       });
+      
+      document.getElementById('profileBanner').style.backgroundColor = profile.banner_color;
+      if (profile.banner_image) {
+        document.getElementById('profileBanner').style.backgroundImage = `url(${profile.banner_image})`;
+        document.getElementById('profileBanner').style.backgroundSize = 'cover';
+      }
+      
+      profileModal.style.display = 'flex';
     });
-
-    // User status
-    userStatusInput.addEventListener('change', () => {
-      const status = userStatusInput.value.trim();
-      socket.emit('update-status', { customStatus: status });
+    
+    closeProfileBtn.addEventListener('click', () => {
+      profileModal.style.display = 'none';
     });
-
-    // Private messages
-    function openPrivateChat(user) {
-      currentPrivateChat = user.userId;
-      privateMsgUsername.textContent = user.username;
-      privateMessagesEl.innerHTML = '';
-      privateMsgModal.style.display = 'flex';
-
-      // Fetch previous messages
-      fetch(`/api/private-messages/${user.userId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      .then(res => res.json())
-      .then(messages => {
-        messages.forEach(msg => {
-          displayPrivateMessage(msg);
+    
+    saveProfileBtn.addEventListener('click', async () => {
+      const bio = document.getElementById('profileBio').textContent;
+      const bannerColor = document.getElementById('profileBanner').style.backgroundColor;
+      
+      const response = await fetch('/api/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: localStorage.getItem('nexus_token'),
+          bio,
+          banner_color: bannerColor,
+          banner_image: document.getElementById('profileBanner').style.backgroundImage.replace(/url\("|"\/g, '')
+        })
+      });
+      
+      if (response.ok) {
+        alert('Profil sauvegardé !');
+        profileModal.style.display = 'none';
+      }
+    });
+    
+    // Soundboard
+    const soundboardModal = document.getElementById('soundboardModal');
+    const soundboardIcon = document.getElementById('soundboardIcon');
+    const closeSoundboardBtn = document.getElementById('closeSoundboardBtn');
+    
+    soundboardIcon.addEventListener('click', async () => {
+      const response = await fetch('/api/soundboard');
+      const { sounds } = await response.json();
+      
+      const soundboardGrid = document.getElementById('soundboardGrid');
+      soundboardGrid.innerHTML = '';
+      
+      sounds.forEach(sound => {
+        const button = document.createElement('button');
+        button.className = 'sound-btn';
+        button.innerHTML = `<i class="fas fa-play"></i> ${sound.name}`;
+        button.addEventListener('click', () => {
+          const audio = new Audio(sound.url);
+          audio.play();
+          socket.emit('play_sound', { soundUrl: sound.url });
         });
+        soundboardGrid.appendChild(button);
       });
-    }
-
-    function displayPrivateMessage(message) {
-      const isMe = message.from === parseInt(userId);
-      const messageEl = document.createElement('div');
-      messageEl.className = 'message';
-      messageEl.style.justifyContent = isMe ? 'flex-end' : 'flex-start';
-      messageEl.innerHTML = `
-        <div class="message-content" style="background-color: ${isMe ? 'var(--neon-purple)' : '#2d1b69'}; border-radius: 8px; padding: 8px 12px; max-width: 80%;">
-          <div>${message.content}</div>
-          <div class="message-timestamp" style="text-align: ${isMe ? 'right' : 'left'}">${new Date(message.created_at).toLocaleTimeString()}</div>
-        </div>
-      `;
-      privateMessagesEl.appendChild(messageEl);
-      privateMessagesEl.scrollTop = privateMessagesEl.scrollHeight;
-    }
-
-    sendPrivateMessageBtn.addEventListener('click', () => {
-      const content = privateMessageInput.value.trim();
-      if (content && currentPrivateChat) {
-        socket.emit('private-msg', { to: currentPrivateChat, content });
-        privateMessageInput.value = '';
-      }
+      
+      soundboardModal.style.display = 'flex';
     });
-
-    privateMessageInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        sendPrivateMessageBtn.click();
-      }
+    
+    closeSoundboardBtn.addEventListener('click', () => {
+      soundboardModal.style.display = 'none';
     });
-
-    socket.on('private-msg', (message) => {
-      if (message.from === currentPrivateChat || message.to === currentPrivateChat) {
-        displayPrivateMessage(message);
+    
+    socket.on('play_sound', ({ soundUrl, userId }) => {
+      if (userId !== localStorage.getItem('nexus_userId')) {
+        const audio = new Audio(soundUrl);
+        audio.play();
       }
-    });
-
-    closePrivateMsgBtn.addEventListener('click', () => {
-      privateMsgModal.style.display = 'none';
-      currentPrivateChat = null;
     });
   </script>
 </body>
