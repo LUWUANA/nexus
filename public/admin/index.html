@@ -8,35 +8,27 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   --violet:#6e57ff;--violet-2:#5a46e8;--neon:#a78bfa;
-  --bg:#1e1f22;--bg-side:#2b2d31;--bg-card:#313338;--bg-input:#383a40;
+  --bg:#1e1f22;--bg-card:#313338;--bg-input:#383a40;
   --text:#dbdee1;--muted:#949ba4;--green:#23a55a;--red:#f23f43;--amber:#f0b132;
   --border:rgba(255,255,255,.08);--radius:10px;
 }
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:40px 20px;}
-h2.sr-only{position:absolute;left:-9999px}
 .container{max-width:760px;margin:0 auto;}
 header{text-align:center;margin-bottom:40px;}
-header .logo{font-size:2rem;font-weight:700;color:var(--neon);letter-spacing:-.02em;}
+header .logo{font-size:2rem;font-weight:700;color:var(--neon);}
 header .logo span{color:var(--muted);font-weight:400;}
-header p{color:var(--muted);font-size:.95rem;margin-top:6px;}
+header p{color:var(--muted);font-size:.9rem;margin-top:6px;}
 .card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:20px;}
-.card h3{font-size:1rem;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
-.card h3 .badge{font-size:.7rem;background:rgba(110,87,255,.2);color:var(--neon);padding:2px 8px;border-radius:20px;font-weight:500;}
+.card h3{font-size:1rem;font-weight:700;margin-bottom:16px;}
 label{display:block;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px;}
-input,textarea{width:100%;background:var(--bg-input);border:1.5px solid transparent;border-radius:var(--radius);color:var(--text);font-family:inherit;font-size:.95rem;padding:12px 14px;outline:none;transition:border-color .2s;}
-input:focus,textarea:focus{border-color:var(--violet);}
-textarea{resize:vertical;min-height:100px;line-height:1.5;}
-input::placeholder,textarea::placeholder{color:var(--muted);}
-.field{margin-bottom:18px;}
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-.btn{padding:12px 20px;border-radius:var(--radius);border:none;font-family:inherit;font-size:.95rem;font-weight:700;cursor:pointer;transition:.2s;display:inline-flex;align-items:center;gap:8px;}
-.btn-primary{background:var(--violet);color:#fff;width:100%;justify-content:center;}
+textarea{width:100%;background:var(--bg-input);border:1.5px solid transparent;border-radius:var(--radius);color:var(--text);font-family:inherit;font-size:.95rem;padding:12px 14px;outline:none;transition:border-color .2s;resize:vertical;min-height:120px;line-height:1.5;}
+textarea:focus{border-color:var(--violet);}
+textarea::placeholder{color:var(--muted);}
+.btn{padding:12px 20px;border-radius:var(--radius);border:none;font-family:inherit;font-size:.95rem;font-weight:700;cursor:pointer;transition:.2s;display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;}
+.btn-primary{background:var(--violet);color:#fff;}
 .btn-primary:hover{background:var(--violet-2);}
 .btn-primary:disabled{opacity:.5;cursor:not-allowed;}
-.btn-sm{padding:7px 14px;font-size:.82rem;}
-.btn-ghost{background:rgba(255,255,255,.06);color:var(--text);}
-.btn-ghost:hover{background:rgba(255,255,255,.1);}
-.pipeline{display:flex;align-items:center;gap:0;margin-bottom:28px;overflow-x:auto;}
+.pipeline{display:flex;align-items:center;margin-bottom:28px;overflow-x:auto;}
 .step{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;position:relative;}
 .step:not(:last-child)::after{content:'';position:absolute;top:18px;left:50%;width:100%;height:2px;background:var(--border);z-index:0;}
 .step-dot{width:36px;height:36px;border-radius:50%;background:var(--bg-input);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.9rem;z-index:1;transition:.3s;}
@@ -44,127 +36,72 @@ input::placeholder,textarea::placeholder{color:var(--muted);}
 .step.active .step-dot{background:var(--violet);border-color:var(--violet);box-shadow:0 0 0 4px rgba(110,87,255,.25);}
 .step.error .step-dot{background:var(--red);border-color:var(--red);}
 .step-label{font-size:.72rem;color:var(--muted);text-align:center;white-space:nowrap;}
-.step.active .step-label{color:var(--text);}
-.log-box{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px;font-family:'DM Mono',monospace;font-size:.8rem;line-height:1.8;max-height:280px;overflow-y:auto;color:var(--muted);}
+.step.active .step-label,.step.done .step-label{color:var(--text);}
+.log-box{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px;font-family:'DM Mono',monospace;font-size:.8rem;line-height:1.8;max-height:300px;overflow-y:auto;color:var(--muted);}
 .log-box .ok{color:var(--green);}
 .log-box .err{color:var(--red);}
 .log-box .info{color:var(--violet);}
 .log-box .warn{color:var(--amber);}
-.pr-preview{display:none;}
-.pr-preview.show{display:block;}
-.pr-header{display:flex;align-items:center;gap:12px;padding:16px;background:rgba(110,87,255,.1);border-radius:var(--radius);border:1px solid rgba(110,87,255,.3);margin-bottom:16px;}
-.pr-header .pr-icon{width:40px;height:40px;background:var(--violet);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
-.pr-header .pr-meta small{color:var(--muted);font-size:.8rem;}
-.pr-header .pr-meta b{display:block;font-size:.95rem;}
-.files-list{display:flex;flex-direction:column;gap:8px;}
-.file-tag{background:var(--bg-input);border-radius:6px;padding:8px 12px;font-family:'DM Mono',monospace;font-size:.8rem;display:flex;align-items:center;gap:8px;}
-.file-tag .dot{width:8px;height:8px;border-radius:50%;background:var(--amber);flex-shrink:0;}
 .pr-link{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;background:rgba(35,165,90,.1);border:1px solid rgba(35,165,90,.3);border-radius:var(--radius);color:var(--green);font-weight:700;text-decoration:none;margin-top:16px;}
 .pr-link:hover{background:rgba(35,165,90,.2);}
 .suggestions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
 .sug{background:var(--bg-input);border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:.82rem;cursor:pointer;color:var(--muted);transition:.2s;}
 .sug:hover{border-color:var(--violet);color:var(--text);}
-.tag-warn{background:rgba(240,177,50,.15);color:var(--amber);font-size:.72rem;padding:2px 8px;border-radius:10px;font-weight:600;}
+.info-box{background:rgba(110,87,255,.08);border:1px solid rgba(110,87,255,.2);border-radius:var(--radius);padding:14px;font-size:.85rem;color:var(--muted);margin-bottom:20px;}
+.info-box strong{color:var(--neon);}
 </style>
 </head>
 <body>
-<h2 class="sr-only">NEXUS AI Updater</h2>
 <div class="container">
 
 <header>
   <div class="logo">✦ NEXUS <span>AI Updater</span></div>
-  <p>Décris une amélioration → Mistral génère le code → une PR est créée sur GitHub</p>
+  <p>Tout passe par le serveur — tokens sécurisés dans .env</p>
 </header>
+
+<div class="info-box">
+  <strong>Architecture sécurisée</strong> — Les clés Mistral et GitHub sont dans le <code>.env</code> du serveur. Aucun token n'est exposé dans le navigateur.
+</div>
 
 <div class="pipeline" id="pipeline">
   <div class="step active" id="s1"><div class="step-dot">📝</div><div class="step-label">Demande</div></div>
-  <div class="step" id="s2"><div class="step-dot">🧠</div><div class="step-label">Mistral génère</div></div>
-  <div class="step" id="s3"><div class="step-dot">🌿</div><div class="step-label">Branche créée</div></div>
-  <div class="step" id="s4"><div class="step-dot">📤</div><div class="step-label">Commit</div></div>
+  <div class="step" id="s2"><div class="step-dot">📂</div><div class="step-label">Lecture code</div></div>
+  <div class="step" id="s3"><div class="step-dot">🧠</div><div class="step-label">Mistral</div></div>
+  <div class="step" id="s4"><div class="step-dot">🌿</div><div class="step-label">Branche</div></div>
   <div class="step" id="s5"><div class="step-dot">🔀</div><div class="step-label">PR ouverte</div></div>
 </div>
 
 <div class="card">
-  <h3>🔑 Configuration <span class="badge tag-warn">Stocké localement</span></h3>
-  <div class="grid-2">
-    <div class="field">
-      <label>Clé API Mistral</label>
-      <input type="password" id="mistral-key" placeholder="Mistral API key...">
-    </div>
-    <div class="field">
-      <label>Token GitHub</label>
-      <input type="password" id="github-token" placeholder="ghp_...">
-    </div>
-  </div>
-  <div class="field">
-    <label>Repo GitHub (user/repo)</label>
-    <input type="text" id="github-repo" placeholder="LUWUANA/nexus">
-  </div>
-  <button class="btn btn-ghost btn-sm" onclick="saveConfig()">💾 Sauvegarder</button>
-  <span id="config-saved" style="font-size:.8rem;color:var(--green);margin-left:10px;opacity:0;transition:.3s;"></span>
-</div>
-
-<div class="card">
   <h3>📝 Ta demande</h3>
-  <div class="field">
-    <label>Décris la fonctionnalité ou le fix</label>
-    <textarea id="request" placeholder="Ex: Ajoute un indicateur 'est en train d'écrire...' en temps réel via Socket.io."></textarea>
+  <div style="margin-bottom:14px;">
+    <label>Décris la fonctionnalité</label>
+    <textarea id="request" placeholder="Ex: Refonte visuelle deep purple avec néons violets, liste membres connectés à droite, icône MPs à gauche..."></textarea>
   </div>
   <div style="margin-bottom:18px;">
     <label>Suggestions rapides</label>
     <div class="suggestions">
-      <div class="sug" onclick="setRequest(this)">Ajouter des réactions emoji aux messages</div>
-      <div class="sug" onclick="setRequest(this)">Système de mentions @pseudo</div>
-      <div class="sug" onclick="setRequest(this)">Indicateur "est en train d'écrire..."</div>
-      <div class="sug" onclick="setRequest(this)">Éditer et supprimer ses messages</div>
-      <div class="sug" onclick="setRequest(this)">Ajouter un système de rôles (admin, modérateur, membre)</div>
+      <div class="sug" onclick="setReq(this)">Refonte deep purple + néons violets</div>
+      <div class="sug" onclick="setReq(this)">Ajouter réactions emoji aux messages</div>
+      <div class="sug" onclick="setReq(this)">Indicateur "est en train d'écrire..."</div>
+      <div class="sug" onclick="setReq(this)">Membres connectés en temps réel à droite</div>
+      <div class="sug" onclick="setReq(this)">Panneau profil personnalisable</div>
+      <div class="sug" onclick="setReq(this)">Soundboard avec 6 sons</div>
     </div>
   </div>
-  <button class="btn btn-primary" id="run-btn" onclick="runUpdater()">🚀 Générer la Pull Request</button>
+  <button class="btn btn-primary" id="run-btn" onclick="run()">🚀 Générer la Pull Request</button>
 </div>
 
 <div class="card" id="log-card" style="display:none;">
   <h3>📡 Progression</h3>
   <div class="log-box" id="log-box"></div>
-</div>
-
-<div class="card pr-preview" id="pr-preview">
-  <h3>🔀 Pull Request créée</h3>
-  <div class="pr-header">
-    <div class="pr-icon">🔀</div>
-    <div class="pr-meta">
-      <b id="pr-title">—</b>
-      <small id="pr-branch">branche : —</small>
-    </div>
-  </div>
-  <label style="margin-bottom:10px;">Fichiers modifiés</label>
-  <div class="files-list" id="files-list"></div>
-  <a class="pr-link" id="pr-link" href="#" target="_blank">👀 Voir et valider la PR sur GitHub →</a>
+  <a class="pr-link" id="pr-link" href="#" target="_blank" style="display:none;">👀 Voir et valider la PR sur GitHub →</a>
 </div>
 
 </div>
 <script>
-// On envoie uniquement les noms de fichiers, pas le contenu complet
-// pour réduire la taille du prompt et éviter les JSON tronqués
-const CODEBASE_FILES = ['server.js', 'db.js', 'package.json'];
+const FILES = ['public/index.html', 'server.js', 'db.js'];
 
-function loadConfig(){
-  document.getElementById('mistral-key').value  = localStorage.getItem('nx_mkey')||'';
-  document.getElementById('github-token').value = localStorage.getItem('nx_gtoken')||'';
-  document.getElementById('github-repo').value  = localStorage.getItem('nx_grepo')||'LUWUANA/nexus';
-}
-
-function saveConfig(){
-  localStorage.setItem('nx_mkey',   document.getElementById('mistral-key').value);
-  localStorage.setItem('nx_gtoken', document.getElementById('github-token').value);
-  localStorage.setItem('nx_grepo',  document.getElementById('github-repo').value);
-  const el = document.getElementById('config-saved');
-  el.textContent = '✓ Sauvegardé';
-  el.style.opacity = 1;
-  setTimeout(()=>el.style.opacity=0, 2000);
-}
-
-function setRequest(el){ document.getElementById('request').value = el.textContent; }
+function setReq(el){ document.getElementById('request').value = el.textContent; }
 
 function log(msg, type=''){
   const box = document.getElementById('log-box');
@@ -184,176 +121,75 @@ function setStep(n, state){
   }
 }
 
-async function githubReq(token, repo, method, path, body){
-  const r = await fetch('/api/github-proxy', {
-    method: 'POST',
+async function api(method, path, body){
+  const r = await fetch(path, {
+    method,
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token, method, path: `/repos/${repo}${path}`, body: body || null }),
+    body: body ? JSON.stringify(body) : undefined,
   });
-  return { status: r.status, body: await r.json() };
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+  return data;
 }
 
-async function runUpdater(){
-  const apiKey  = document.getElementById('mistral-key').value.trim();
-  const ghToken = document.getElementById('github-token').value.trim();
-  const ghRepo  = document.getElementById('github-repo').value.trim();
+async function run(){
   const request = document.getElementById('request').value.trim();
-
-  if(!apiKey||!ghToken||!ghRepo){ alert('Configure les 3 champs avant de lancer.'); return; }
-  if(!request){ alert('Décris ta demande !'); return; }
+  if (!request) { alert('Décris ta demande !'); return; }
 
   const btn = document.getElementById('run-btn');
   btn.disabled = true;
   btn.textContent = '⏳ En cours...';
   document.getElementById('log-card').style.display = 'block';
   document.getElementById('log-box').innerHTML = '';
-  document.getElementById('pr-preview').classList.remove('show');
+  document.getElementById('pr-link').style.display = 'none';
 
   try {
-    // ── Step 1 : Lire le codebase via proxy ──────────────────────────────
-    setStep(1);
-    log('Lecture du codebase depuis GitHub...');
-    const codeContext = [];
-    for(const file of CODEBASE_FILES){
-      try{
-        const r = await githubReq(ghToken, ghRepo, 'GET', `/contents/${file}`);
-        if(r.status === 200){
-          // Tronquer chaque fichier à 3000 chars pour ne pas dépasser le context
-          const full = atob(r.body.content.replace(/\n/g,''));
-          const content = full.length > 3000 ? full.slice(0, 3000) + '\n// ... (tronqué)' : full;
-          codeContext.push(`### ${file}\n\`\`\`\n${content}\n\`\`\``);
-          log(`  ✓ ${file}`, 'ok');
-        } else {
-          log(`  ⚠ ${file} : ${r.body.message}`, 'warn');
-        }
-      }catch(e){ log(`  ⚠ ${file} ignoré : ${e.message}`, 'warn'); }
-    }
-
-    if(codeContext.length === 0) throw new Error('Aucun fichier lu — vérifie le token GitHub et le nom du repo');
-
-    // ── Step 2 : Mistral génère le code ──────────────────────────────────
+    // Step 1 → 2 : Lire les fichiers via le serveur
     setStep(2);
-    log('Appel Mistral API...', 'info');
-
-    const systemPrompt = `Tu es un expert Node.js/Express/Socket.io qui maintient NEXUS, un clone Discord open-source inclusif.
-Tu reçois une demande et un extrait du code source.
-Tu réponds UNIQUEMENT avec un objet JSON valide, sans markdown ni backticks, de cette forme :
-{"branch_name":"feature/nom-kebab","pr_title":"feat: titre court","pr_body":"## Description\\nCe que fait ce changement.","files":{"server.js":"// contenu complet du fichier modifié"},"commit_message":"feat: description courte"}
-IMPORTANT : N'inclus que les fichiers réellement modifiés. Le contenu doit être le fichier COMPLET et valide.`;
-
-    const aiRes = await fetch('https://api.mistral.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'mistral-large-latest',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Code source :\n\n${codeContext.join('\n\n')}\n\n---\n\nDemande : ${request}` }
-        ],
-        max_tokens: 16000,
-        temperature: 0.05,
-        response_format: { type: 'json_object' },
-      }),
-    });
-
-    if(!aiRes.ok){ throw new Error(`Mistral API ${aiRes.status} : ${await aiRes.text()}`); }
-    const aiData = await aiRes.json();
-
-    if(aiData.choices[0].finish_reason === 'length'){
-      throw new Error('Réponse tronquée par Mistral — essaie une demande plus simple');
-    }
-
-    const raw = aiData.choices[0].message.content.trim();
-
-    let changes;
-    try {
-      changes = JSON.parse(raw);
-    } catch(e) {
-      // Tentative de récupération si JSON partiel
-      const match = raw.match(/\{[\s\S]*\}/);
-      if(match) {
-        try { changes = JSON.parse(match[0]); }
-        catch { throw new Error('JSON invalide — réessaie avec une demande plus simple'); }
-      } else {
-        throw new Error('Réponse Mistral non parseable — réessaie');
+    log('Lecture du codebase...', 'info');
+    const codeContext = [];
+    for (const file of FILES) {
+      try {
+        const data = await api('GET', `/api/ai/file?path=${encodeURIComponent(file)}`);
+        const preview = data.content.slice(0, 3000);
+        codeContext.push(`### ${file}\n\`\`\`\n${preview}\n\`\`\``);
+        log(`  ✓ ${file}`, 'ok');
+      } catch(e) {
+        log(`  ⚠ ${file} ignoré`, 'warn');
       }
     }
 
-    if(!changes.branch_name || !changes.files) throw new Error('Réponse Mistral incomplète');
+    if (codeContext.length === 0) throw new Error('Aucun fichier lu — vérifie GITHUB_TOKEN et GITHUB_REPO dans .env');
 
+    // Step 3 : Mistral génère
+    setStep(3);
+    log('Appel Mistral (côté serveur)...', 'info');
+    const changes = await api('POST', '/api/ai/generate', { request, codeContext: codeContext.join('\n\n') });
     log(`Branche : ${changes.branch_name}`, 'ok');
     log(`Fichiers : ${Object.keys(changes.files).join(', ')}`, 'ok');
 
-    // ── Step 3 : Créer la branche ─────────────────────────────────────────
-    setStep(3);
-    log('Récupération de main...', 'info');
-    const refRes = await githubReq(ghToken, ghRepo, 'GET', '/git/ref/heads/main');
-    if(refRes.status !== 200) throw new Error('Impossible de lire main : '+refRes.body.message);
-    const baseSha = refRes.body.object.sha;
-
-    log(`Création de la branche ${changes.branch_name}...`);
-    const branchRes = await githubReq(ghToken, ghRepo, 'POST', '/git/refs', {
-      ref: `refs/heads/${changes.branch_name}`, sha: baseSha,
-    });
-    if(branchRes.status !== 201) throw new Error('Branche échouée : '+branchRes.body.message);
-    log('Branche créée ✓', 'ok');
-
-    // ── Step 4 : Commiter les fichiers ────────────────────────────────────
+    // Step 4 → 5 : Créer branche + commit + PR
     setStep(4);
-    for(const [filePath, content] of Object.entries(changes.files)){
-      log(`Commit : ${filePath}...`);
-      const fileRes = await githubReq(ghToken, ghRepo, 'GET', `/contents/${filePath}?ref=${changes.branch_name}`);
-      const fileSha = fileRes.status === 200 ? fileRes.body.sha : undefined;
-
-      const encodedContent = btoa(unescape(encodeURIComponent(content)));
-      const commitRes = await githubReq(ghToken, ghRepo, 'PUT', `/contents/${filePath}`, {
-        message: changes.commit_message,
-        content: encodedContent,
-        branch:  changes.branch_name,
-        ...(fileSha ? {sha: fileSha} : {}),
-      });
-      if(commitRes.status !== 200 && commitRes.status !== 201)
-        throw new Error(`Commit ${filePath} : ${commitRes.body.message}`);
-      log(`  ✓ ${filePath}`, 'ok');
-    }
-
-    // ── Step 5 : Créer la PR ──────────────────────────────────────────────
+    log('Création branche + commit...', 'info');
     setStep(5);
-    log('Création de la Pull Request...', 'info');
-    const prRes = await githubReq(ghToken, ghRepo, 'POST', '/pulls', {
-      title: changes.pr_title,
-      body:  changes.pr_body + `\n\n---\n*🤖 Généré par NEXUS AI Updater (Mistral) — "${request}"*`,
-      head:  changes.branch_name,
-      base:  'main',
-    });
-    if(prRes.status !== 201) throw new Error('PR échouée : '+prRes.body.message);
+    const pr = await api('POST', '/api/ai/pull-request', { changes });
+
+    log(`✅ PR créée : ${pr.title}`, 'ok');
+    log(pr.url, 'info');
 
     setStep(5, 'done');
-    log('✅ Pull Request créée !', 'ok');
-    log(prRes.body.html_url, 'info');
+    const link = document.getElementById('pr-link');
+    link.href = pr.url;
+    link.style.display = 'flex';
 
-    document.getElementById('pr-title').textContent  = changes.pr_title;
-    document.getElementById('pr-branch').textContent = `branche : ${changes.branch_name}`;
-    const fl = document.getElementById('files-list');
-    fl.innerHTML = Object.keys(changes.files).map(f=>
-      `<div class="file-tag"><div class="dot"></div>${f}</div>`
-    ).join('');
-    document.getElementById('pr-link').href = prRes.body.html_url;
-    document.getElementById('pr-preview').classList.add('show');
-
-  } catch(err){
-    log('❌ Erreur : '+err.message, 'err');
-    setStep([1,2,3,4,5].find(n=>document.getElementById('s'+n).classList.contains('active'))||1, 'error');
+  } catch(err) {
+    log(`❌ ${err.message}`, 'err');
+    setStep([1,2,3,4,5].find(n => document.getElementById('s'+n).classList.contains('active')) || 1, 'error');
   }
 
   btn.disabled = false;
   btn.textContent = '🚀 Générer la Pull Request';
 }
-
-loadConfig();
 </script>
 </body>
 </html>
