@@ -52,7 +52,7 @@ const upload = multer({ storage });
 
 // Sessions
 const sessions = new Map();
-const connectedUsers = new Map(); // userId → { username, socketId, status, customStatus }
+const connectedUsers = new Map(); // userId → { username, socketId, status, customStatus, pronouns }
 
 // Helpers
 function signToken(userId) {
@@ -71,16 +71,16 @@ function generateInviteCode() {
 function getUserBadges(userId) {
   const user = getUserById.get(userId);
   if (!user) return [];
-  
+
   const badges = [];
   const createdAt = new Date(user.created_at);
   const now = new Date();
   const daysSinceCreation = Math.floor((now - createdAt) / (1000 * 60 * 60 * 24));
-  
+
   if (daysSinceCreation >= 365) badges.push('Ancien·ne');
   if (user.nitro) badges.push('Nitro');
   if (user.id === 1) badges.push('Fondateur');
-  
+
   return badges;
 }
 
@@ -88,64 +88,107 @@ function getUserBadges(userId) {
 app.post('/api/register', (req, res) => {
   const { username, password, pronouns } = req.body;
   if (!username || !password) return res.status(400).json({ error: 'Pseudo et mot de passe requis' });
-  if (username.length < 2 || username.length > 32) return res.status(400).json({ error: 'Pseudo : 2 à 32 caractères' });
+  if (username.length < 2 || username.length > 32) return res.status(400).json({ error: 'Pseudo doit faire entre 2 et 32 caractères' });
 
-  const existing = getUserByUsername.get(username);
-  if (existing) return res.status(409).json({ error: 'Pseudo déjà pris' });
+  const existingUser = getUserByUsername.get(username);
+  if (existingUser) return res.status(400).json({ error: 'Pseudo déjà pris' });
 
-  const hash   = bcrypt.hashSync(password, 10);
-  const avatar = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(username)}`;
+  const hashedPassword = bcrypt.hashSync(password, 10);
+  const userId = createUser.run(username, hashedPassword, pronouns || 'iel').lastInsertRowid;
+  createUserProfile.run(userId, '', '', '', '');
 
-  let result;
-  try {
-    result = createUser.run({ username, password: hash, pronouns: pronouns || 'iel', avatar });
-    createUserProfile.run({ user_id: result.lastInsertRowid, bio: '', banner_color: '#6a0dad', badges: JSON.stringify([]) });
-  } catch (err) {
-    return res.status(500).json({ error: 'Erreur serveur' });
+  res.json({ token: signToken(userId) });
+});
+
+app.post('/api/login', (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) return res.status(400).json({ error: 'Pseudo et mot de passe requis' });
+
+  const user = getUserByUsername.get(username);
+  if (!user || !bcrypt.compareSync(password, user.password)) {
+    return res.status(401).json({ error: 'Identifiants invalides' });
   }
 
-  const token = signToken(result.lastInsertRowid);
-  res.json({ token, userId: result.lastInsertRowid });
+  res.json({ token: signToken(user.id) });
 });
 
-// REST: Profile
-app.get('/api/profile/:userId', (req, res) => {
-  const { userId } = req.params;
-  const profile = getUserProfile.get(userId);
-  if (!profile) return res.status(404).json({ error: 'Profil non trouvé' });
-  
-  const user = getUserById.get(userId);
-  if (!user) return res.status(404).json({ error: 'Utilisateur non trouvé' });
-  
-  const badges = [...JSON.parse(profile.badges || '[]'), ...getUserBadges(userId)];
-  res.json({ ...profile, badges, username: user.username, avatar: user.avatar, pronouns: user.pronouns });
-});
-
-app.post('/api/profile', (req, res) => {
-  const { token, bio, banner_color, banner_image } = req.body;
+// REST: User
+app.get('/api/@me', (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
   const payload = verifyToken(token);
-  if (!payload) return res.status(401).json({ error: 'Token invalide' });
-  
-  try {
-    updateUserProfile.run({ bio, banner_color, banner_image, user_id: payload.sub });
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: 'Erreur serveur' });
-  }
+  if (!payload) return res.status(401).json({ error: 'Non autorisé' });
+
+  const user = getUserById.get(payload.sub);
+  if (!user) return res.status(404).json({ error: 'Utilisateur introuvable' });
+
+  const profile = getUserProfile.get(payload.sub);
+  const badges = getUserBadges(payload.sub);
+
+  res.json({
+    id: user.id,
+    username: user.username,
+    pronouns: user.pronouns,
+    avatar: user.avatar,
+    status: user.status,
+    customStatus: profile?.custom_status || '',
+    bio: profile?.bio || '',
+    banner: profile?.banner || '',
+    badges
+  });
 });
 
-// Soundboard
-app.get('/api/soundboard', (req, res) => {
-  res.json({
-    sounds: [
-      { name: 'Connexion', url: 'https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3' },
-      { name: 'Déconnexion', url: 'https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-223.mp3' },
-      { name: 'Notification', url: 'https://assets.mixkit.co/sfx/preview/mixkit-positive-notification-951.mp3' },
-      { name: 'Applaudissements', url: 'https://assets.mixkit.co/sfx/preview/mixkit-crowd-applause-461.mp3' },
-      { name: 'Rire', url: 'https://assets.mixkit.co/sfx/preview/mixkit-laughing-crowd-424.mp3' },
-      { name: 'Ambiance', url: 'https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-opener-222.mp3' }
-    ]
-  });
+app.patch('/api/@me/status', (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  const payload = verifyToken(token);
+  if (!payload) return res.status(401).json({ error: 'Non autorisé' });
+
+  const { status, customStatus } = req.body;
+  if (status) updateUserStatus.run(status, payload.sub);
+  if (customStatus !== undefined) {
+    const profile = getUserProfile.get(payload.sub);
+    if (profile) {
+      updateUserProfile.run(customStatus, profile.bio, profile.banner, profile.pronouns, payload.sub);
+    } else {
+      createUserProfile.run(payload.sub, customStatus, '', '', '');
+    }
+  }
+
+  const user = getUserById.get(payload.sub);
+  if (connectedUsers.has(payload.sub)) {
+    connectedUsers.get(payload.sub).status = status || user.status;
+    connectedUsers.get(payload.sub).customStatus = customStatus || '';
+    io.emit('user-status', Array.from(connectedUsers.values()));
+  }
+
+  res.json({ success: true });
+});
+
+app.patch('/api/@me/profile', upload.fields([{ name: 'banner', maxCount: 1 }]), (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  const payload = verifyToken(token);
+  if (!payload) return res.status(401).json({ error: 'Non autorisé' });
+
+  const { bio, pronouns } = req.body;
+  let banner = req.files?.banner?.[0]?.filename || getUserProfile.get(payload.sub)?.banner || '';
+
+  const profile = getUserProfile.get(payload.sub);
+  if (profile) {
+    updateUserProfile.run(profile.custom_status, bio, banner, pronouns, payload.sub);
+  } else {
+    createUserProfile.run(payload.sub, '', bio, banner, pronouns);
+  }
+
+  res.json({ success: true });
+});
+
+// REST: Private Messages
+app.get('/api/dm/:userId', (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  const payload = verifyToken(token);
+  if (!payload) return res.status(401).json({ error: 'Non autorisé' });
+
+  const messages = getPrivateMessages.all(payload.sub, req.params.userId);
+  res.json(messages);
 });
 
 // Socket.io
@@ -153,28 +196,52 @@ io.on('connection', (socket) => {
   const token = socket.handshake.auth.token;
   const payload = verifyToken(token);
   if (!payload) return socket.disconnect();
-  
-  const userId = payload.sub;
-  const user = getUserById.get(userId);
+
+  const user = getUserById.get(payload.sub);
   if (!user) return socket.disconnect();
-  
-  connectedUsers.set(userId, {
+
+  const profile = getUserProfile.get(payload.sub) || {};
+  connectedUsers.set(payload.sub, {
+    id: payload.sub,
     username: user.username,
     socketId: socket.id,
     status: user.status,
-    customStatus: user.custom_status
+    customStatus: profile.custom_status || '',
+    pronouns: user.pronouns,
+    avatar: user.avatar
   });
-  
-  io.emit('user_connected', { userId, username: user.username, status: user.status });
-  
+
+  io.emit('user-status', Array.from(connectedUsers.values()));
+
   socket.on('disconnect', () => {
-    connectedUsers.delete(userId);
-    io.emit('user_disconnected', { userId });
+    connectedUsers.delete(payload.sub);
+    io.emit('user-status', Array.from(connectedUsers.values()));
   });
-  
-  socket.on('play_sound', ({ soundUrl }) => {
-    socket.broadcast.emit('play_sound', { soundUrl, userId });
+
+  socket.on('private-msg', ({ to, content }) => {
+    if (!to || !content) return;
+
+    const receiver = connectedUsers.get(to);
+    if (!receiver) return;
+
+    const message = {
+      id: Date.now(),
+      sender_id: payload.sub,
+      receiver_id: to,
+      content,
+      created_at: new Date().toISOString()
+    };
+
+    createPrivateMessage.run(payload.sub, to, content);
+    io.to(receiver.socketId).emit('private-msg', message);
+    socket.emit('private-msg', message);
+  });
+
+  socket.on('play-sound', ({ soundUrl }) => {
+    socket.broadcast.emit('play-sound', { soundUrl });
   });
 });
 
-server.listen(PORT, () => console.log(`NEXUS démarré sur le port ${PORT}`));
+server.listen(PORT, () => {
+  console.log(`NEXUS en écoute sur le port ${PORT}`);
+});
