@@ -118,13 +118,14 @@
     }
 
     .auth-container {
-      background: rgba(20, 20, 40, 0.6);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(124, 58, 237, 0.3);
-      border-radius: 16px;
-      padding: 40px;
-      width: 500px;
-      box-shadow: 0 8px 32px rgba(168, 85, 247, 0.2);
+      background: rgba(30, 30, 46, 0.8);
+      padding: 2rem;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     .auth-form {
@@ -140,15 +141,15 @@
     }
 
     .form-group label {
-      color: var(--text-secondary);
       font-size: 0.9rem;
+      color: var(--text-secondary);
     }
 
     .form-group input {
+      padding: 12px;
       background: var(--input-bg);
       border: 1px solid rgba(124, 58, 237, 0.3);
-      border-radius: 8px;
-      padding: 12px 16px;
+      border-radius: 6px;
       color: var(--input-text);
       font-size: 1rem;
       transition: border-color 0.3s;
@@ -157,35 +158,19 @@
     .form-group input:focus {
       outline: none;
       border-color: var(--violet-neon);
+      box-shadow: var(--glow);
     }
 
-    .pronouns-badges {
-      display: flex;
-      gap: 0.5rem;
-      margin-top: 0.5rem;
-    }
-
-    .pronoun-badge {
-      background: rgba(124, 58, 237, 0.2);
-      color: var(--violet-neon);
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .pronoun-badge.active {
-      background: var(--violet-neon);
-      color: white;
+    .form-group input::placeholder {
+      color: var(--input-placeholder);
     }
 
     .auth-button {
+      padding: 12px;
       background: var(--violet-neon);
       color: white;
       border: none;
-      border-radius: 8px;
-      padding: 12px;
+      border-radius: 6px;
       font-size: 1rem;
       font-weight: 600;
       cursor: pointer;
@@ -196,117 +181,114 @@
 
     .auth-button:hover {
       background: var(--pink-neon);
-      transform: translateY(-2px);
+      box-shadow: var(--glow-active);
     }
 
-    .error-message {
-      color: #f87171;
+    .auth-footer {
+      margin-top: 1rem;
       font-size: 0.8rem;
-      margin-top: -1rem;
-      margin-bottom: 1rem;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+
+    .auth-footer a {
+      color: var(--violet-neon);
+      text-decoration: none;
+    }
+
+    .auth-footer a:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
+  <div class="particles" id="particles-js"></div>
+
   <div id="auth-overlay">
-    <div class="nexus-logo">NEXUS</div>
+    <h1 class="nexus-logo">NEXUS</h1>
     <div class="auth-tabs">
       <div class="auth-tab active" data-tab="login">Connexion</div>
       <div class="auth-tab" data-tab="register">Inscription</div>
     </div>
     <div class="auth-container">
-      <div class="auth-form" id="login-form">
+      <form class="auth-form" id="login-form">
         <div class="form-group">
           <label for="login-username">Pseudo</label>
-          <input type="text" id="login-username" placeholder="Entrez votre pseudo" />
+          <input type="text" id="login-username" placeholder="Entrez votre pseudo" required>
         </div>
         <div class="form-group">
           <label for="login-password">Mot de passe</label>
-          <input type="password" id="login-password" placeholder="Entrez votre mot de passe" />
+          <input type="password" id="login-password" placeholder="Entrez votre mot de passe" required>
         </div>
-        <div class="error-message" id="login-error"></div>
-        <button class="auth-button" id="login-button">Se connecter</button>
-      </div>
-      <div class="auth-form" id="register-form" style="display: none;">
+        <button type="submit" class="auth-button">Se connecter</button>
+      </form>
+      <form class="auth-form" id="register-form" style="display: none;">
         <div class="form-group">
           <label for="register-username">Pseudo</label>
-          <input type="text" id="register-username" placeholder="Choisissez un pseudo" />
+          <input type="text" id="register-username" placeholder="Choisissez un pseudo" required>
         </div>
         <div class="form-group">
           <label for="register-password">Mot de passe</label>
-          <input type="password" id="register-password" placeholder="Créez un mot de passe" />
+          <input type="password" id="register-password" placeholder="Créez un mot de passe" required>
         </div>
         <div class="form-group">
-          <label>Pronoms</label>
-          <div class="pronouns-badges">
-            <div class="pronoun-badge active" data-pronoun="iel">iel</div>
-            <div class="pronoun-badge" data-pronoun="il">il</div>
-            <div class="pronoun-badge" data-pronoun="elle">elle</div>
-            <div class="pronoun-badge" data-pronoun="iel/il">iel/il</div>
-            <div class="pronoun-badge" data-pronoun="autre">autre</div>
-          </div>
+          <label for="register-pronouns">Pronoms (optionnel)</label>
+          <input type="text" id="register-pronouns" placeholder="iel / iels / il / elle / ...">
         </div>
-        <div class="error-message" id="register-error"></div>
-        <button class="auth-button" id="register-button">S'inscrire</button>
+        <button type="submit" class="auth-button">S'inscrire</button>
+      </form>
+      <div class="auth-footer">
+        En vous inscrivant, vous acceptez nos <a href="#">Conditions d'utilisation</a>.
       </div>
     </div>
   </div>
 
-  <div class="particles" id="particles-js"></div>
+  <div id="app" style="display: none;">
+    <div class="sidebar">
+      <div class="server-list"></div>
+      <div class="user-profile"></div>
+    </div>
+    <div class="main-content">
+      <div class="channel-header"></div>
+      <div class="message-list"></div>
+      <div class="message-input"></div>
+    </div>
+  </div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const socket = io();
       const authOverlay = document.getElementById('auth-overlay');
+      const app = document.getElementById('app');
       const loginForm = document.getElementById('login-form');
       const registerForm = document.getElementById('register-form');
-      const loginTab = document.querySelector('.auth-tab[data-tab="login"]');
-      const registerTab = document.querySelector('.auth-tab[data-tab="register"]');
-      const pronounBadges = document.querySelectorAll('.pronoun-badge');
-      let selectedPronoun = 'iel';
+      const authTabs = document.querySelectorAll('.auth-tab');
 
-      // Vérifier si un token existe déjà
-      const token = localStorage.getItem('nexus_token');
-      if (token) {
-        socket.emit('auth', { token });
-        authOverlay.style.display = 'none';
-      }
-
-      // Gestion des onglets
-      loginTab.addEventListener('click', () => {
-        loginTab.classList.add('active');
-        registerTab.classList.remove('active');
-        loginForm.style.display = 'flex';
-        registerForm.style.display = 'none';
-      });
-
-      registerTab.addEventListener('click', () => {
-        registerTab.classList.add('active');
-        loginTab.classList.remove('active');
-        registerForm.style.display = 'flex';
-        loginForm.style.display = 'none';
-      });
-
-      // Gestion des pronoms
-      pronounBadges.forEach(badge => {
-        badge.addEventListener('click', () => {
-          pronounBadges.forEach(b => b.classList.remove('active'));
-          badge.classList.add('active');
-          selectedPronoun = badge.getAttribute('data-pronoun');
+      // Gestion des onglets auth
+      authTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          authTabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          document.getElementById('login-form').style.display = tab.dataset.tab === 'login' ? 'block' : 'none';
+          document.getElementById('register-form').style.display = tab.dataset.tab === 'register' ? 'block' : 'none';
         });
       });
 
-      // Connexion
-      document.getElementById('login-button').addEventListener('click', async () => {
+      // Vérification du token au chargement
+      const token = localStorage.getItem('nexus_token');
+      if (token) {
+        authOverlay.style.display = 'none';
+        app.style.display = 'grid';
+        socket.emit('auth', { token });
+        loadServers();
+      }
+
+      // Login
+      loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
         const username = document.getElementById('login-username').value;
         const password = document.getElementById('login-password').value;
-        const errorElement = document.getElementById('login-error');
-
-        if (!username || !password) {
-          errorElement.textContent = 'Veuillez remplir tous les champs.';
-          return;
-        }
 
         try {
           const response = await fetch('/api/login', {
@@ -314,50 +296,83 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password })
           });
-
           const data = await response.json();
-          if (response.ok) {
-            localStorage.setItem('nexus_token', data.token);
-            socket.emit('auth', { token: data.token });
-            authOverlay.style.display = 'none';
-          } else {
-            errorElement.textContent = data.error || 'Échec de la connexion.';
+
+          if (data.error) {
+            alert(data.error);
+            return;
           }
+
+          localStorage.setItem('nexus_token', data.token);
+          authOverlay.style.display = 'none';
+          app.style.display = 'grid';
+          socket.emit('auth', { token: data.token });
+          loadServers();
         } catch (err) {
-          errorElement.textContent = 'Erreur réseau. Veuillez réessayer.';
+          console.error('Erreur de connexion:', err);
+          alert('Erreur de connexion');
         }
       });
 
-      // Inscription
-      document.getElementById('register-button').addEventListener('click', async () => {
+      // Register
+      registerForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
         const username = document.getElementById('register-username').value;
         const password = document.getElementById('register-password').value;
-        const errorElement = document.getElementById('register-error');
-
-        if (!username || !password) {
-          errorElement.textContent = 'Veuillez remplir tous les champs.';
-          return;
-        }
+        const pronouns = document.getElementById('register-pronouns').value;
 
         try {
           const response = await fetch('/api/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password, pronouns: selectedPronoun })
+            body: JSON.stringify({ username, password, pronouns })
           });
-
           const data = await response.json();
-          if (response.ok) {
-            localStorage.setItem('nexus_token', data.token);
-            socket.emit('auth', { token: data.token });
-            authOverlay.style.display = 'none';
-          } else {
-            errorElement.textContent = data.error || 'Échec de l\'inscription.';
+
+          if (data.error) {
+            alert(data.error);
+            return;
           }
+
+          localStorage.setItem('nexus_token', data.token);
+          authOverlay.style.display = 'none';
+          app.style.display = 'grid';
+          socket.emit('auth', { token: data.token });
+          loadServers();
         } catch (err) {
-          errorElement.textContent = 'Erreur réseau. Veuillez réessayer.';
+          console.error('Erreur d\'inscription:', err);
+          alert('Erreur d\'inscription');
         }
       });
+
+      // Charger les serveurs et rejoindre le premier salon texte
+      async function loadServers() {
+        try {
+          const response = await fetch('/api/servers', {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('nexus_token')}`
+            }
+          });
+          const servers = await response.json();
+
+          if (servers.length > 0) {
+            const firstServer = servers[0];
+            const channelsResponse = await fetch(`/api/servers/${firstServer.id}/channels`, {
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('nexus_token')}`
+              }
+            });
+            const channels = await channelsResponse.json();
+            const firstTextChannel = channels.find(channel => channel.type === 'text');
+
+            if (firstTextChannel) {
+              socket.emit('join_channel', { channelId: firstTextChannel.id });
+            }
+          }
+        } catch (err) {
+          console.error('Erreur lors du chargement des serveurs:', err);
+        }
+      }
     });
   </script>
 </body>
