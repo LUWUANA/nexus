@@ -317,7 +317,7 @@ io.on('connection', (socket) => {
     if (!session || !content || !content.trim() || content.length > 2000) return;
     const channel = getChannelById.get(channelId);
     if (!channel) return;
-    const result = createMessage.run(channelId, session.userId, content.trim());
+    const result = createMessage.run({ channel_id: channelId, user_id: session.userId, content: content.trim() });
     const user   = getUserById.get(session.userId);
     const msg = {
       id: result.lastInsertRowid, channel_id: channelId,

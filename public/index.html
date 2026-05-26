@@ -292,12 +292,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('login-btn').textContent = 'Connexion...';
 
     try {
-      var res  = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) });
-      var data = await res.json();
-      if (!res.ok) { showError(data.error || 'Erreur'); return; }
-      localStorage.setItem('nexus_token', data.token);
-      startApp(data.user);
-    } catch(e) {
       showError('Impossible de joindre le serveur');
     } finally {
       document.getElementById('login-btn').disabled = false;
