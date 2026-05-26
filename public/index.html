@@ -438,7 +438,10 @@
 
           if (response.ok) {
             localStorage.setItem('token', data.token);
-            socket.emit('authenticate', data.token);
+document.getElementById('auth-overlay').style.display = 'none';
+document.getElementById('app').style.display = 'grid';
+socket.emit('auth', { token: data.token });
+
           } else {
             authError.textContent = data.error || 'Erreur d\'authentification.';
           }
