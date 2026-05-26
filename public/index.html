@@ -26,1095 +26,401 @@
     }
 
     body {
-      background-color: var(--dark-bg);
+      background: linear-gradient(-45deg, #0d0d1a, #1a0a2e, #0d1a2e, #1a0a2e);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
       color: var(--text-primary);
       overflow: hidden;
+      height: 100vh;
     }
 
-    /* Auth Screen */
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .particle {
+      position: absolute;
+      background: rgba(168, 85, 247, 0.5);
+      border-radius: 50%;
+      opacity: 0;
+      animation: float 15s infinite ease-in;
+    }
+
+    @keyframes float {
+      0% { transform: translateY(100vh) scale(0); opacity: 0; }
+      10% { opacity: 0.8; }
+      90% { opacity: 0.8; }
+      100% { transform: translateY(-100px) scale(1); opacity: 0; }
+    }
+
     .auth-screen {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background-color: var(--dark-bg);
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       z-index: 1000;
     }
 
+    .nexus-logo {
+      font-size: 4rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      text-shadow: var(--glow-active);
+      background: linear-gradient(90deg, var(--violet-neon), var(--pink-neon));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: pulse 2s infinite alternate;
+    }
+
+    @keyframes pulse {
+      from { text-shadow: var(--glow-active); }
+      to { text-shadow: 0 0 20px var(--pink-neon); }
+    }
+
+    .welcome-message {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      margin-bottom: 3rem;
+      text-align: center;
+      max-width: 500px;
+    }
+
     .auth-container {
-      background-color: var(--darker-bg);
+      background: rgba(20, 20, 40, 0.6);
+      backdrop-filter: blur(10px);
       border: 1px solid rgba(124, 58, 237, 0.3);
-      border-radius: 12px;
-      padding: 32px;
-      width: 400px;
-      box-shadow: 0 0 20px rgba(168, 85, 247, 0.2);
+      border-radius: 16px;
+      padding: 40px;
+      width: 500px;
+      box-shadow: 0 8px 32px rgba(168, 85, 247, 0.2);
+      position: relative;
+      overflow: hidden;
+      z-index: 2;
+    }
+
+    .auth-container::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(45deg, var(--violet-neon), var(--pink-neon));
+      z-index: -1;
+      border-radius: 18px;
+      animation: borderGlow 3s linear infinite;
+    }
+
+    @keyframes borderGlow {
+      0% { clip-path: polygon(0% 0%, 0% 100%, 25% 100%, 25% 25%, 75% 25%, 75% 75%, 25% 75%, 25% 100%, 100% 100%, 100% 0%); }
+      100% { clip-path: polygon(0% 0%, 0% 100%, 100% 100%, 100% 75%, 75% 75%, 75% 25%, 25% 25%, 25% 75%, 75% 75%, 75% 100%, 100% 100%, 100% 0%); }
     }
 
     .auth-tabs {
       display: flex;
       margin-bottom: 24px;
       border-bottom: 1px solid rgba(124, 58, 237, 0.2);
+      position: relative;
     }
 
     .auth-tab {
       flex: 1;
-      padding: 12px;
+      padding: 16px;
       text-align: center;
       cursor: pointer;
       color: var(--text-secondary);
-      transition: all 0.2s ease;
+      font-size: 1.1rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      position: relative;
     }
 
     .auth-tab.active {
       color: var(--violet-neon);
-      border-bottom: 2px solid var(--violet-neon);
+    }
+
+    .auth-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, var(--violet-neon), var(--pink-neon));
     }
 
     .auth-form {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 20px;
+    }
+
+    .form-group {
+      position: relative;
     }
 
     .auth-input {
+      width: 100%;
       background-color: rgba(124, 58, 237, 0.1);
       border: 1px solid rgba(124, 58, 237, 0.3);
-      border-radius: 8px;
-      padding: 12px 16px;
+      border-radius: 12px;
+      padding: 16px 16px 16px 48px;
       color: var(--text-primary);
-      font-size: 16px;
-      transition: all 0.2s ease;
+      font-size: 1rem;
+      transition: all 0.3s ease;
     }
 
     .auth-input:focus {
       outline: none;
       border-color: var(--violet-neon);
-      box-shadow: var(--glow);
+      box-shadow: var(--glow-active);
     }
 
-    .auth-select {
-      background-color: rgba(124, 58, 237, 0.1);
+    .input-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+    }
+
+    .auth-input:focus + .input-icon {
+      color: var(--violet-neon);
+    }
+
+    .pronouns-selector {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .pronoun-badge {
+      background-color: rgba(124, 58, 237, 0.2);
       border: 1px solid rgba(124, 58, 237, 0.3);
-      border-radius: 8px;
-      padding: 12px 16px;
-      color: var(--text-primary);
-      font-size: 16px;
-      appearance: none;
-      background-image: url('data:image/svg+xml;utf8,<svg fill="%23a855f7" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18"><path d="M7 10l5 5 5-5z"/></svg>');
-      background-repeat: no-repeat;
-      background-position: right 12px center;
-      background-size: 18px;
+      border-radius: 20px;
+      padding: 8px 16px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .pronoun-badge.active {
+      background-color: var(--violet-neon);
+      color: white;
+      border-color: var(--violet-neon);
     }
 
     .auth-button {
-      background-color: var(--violet-neon);
+      background: linear-gradient(90deg, var(--violet-neon), var(--pink-neon));
       border: none;
-      border-radius: 8px;
-      padding: 12px;
+      border-radius: 12px;
+      padding: 16px;
       color: white;
-      font-size: 16px;
+      font-size: 1.1rem;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.3s ease;
+      margin-top: 8px;
       box-shadow: var(--glow);
     }
 
     .auth-button:hover {
-      background-color: var(--pink-neon);
+      transform: translateY(-2px);
       box-shadow: var(--glow-active);
     }
 
-    .auth-error {
-      color: var(--pink-neon);
-      font-size: 14px;
-      margin-top: -12px;
-      margin-bottom: 12px;
+    .auth-button:active {
+      transform: translateY(0);
     }
 
-    /* Main UI */
-    .main-ui {
-      display: none;
-      grid-template-columns: 80px 280px 1fr 240px;
-      grid-template-rows: 100vh;
-    }
-
-    /* Colonne MPs */
-    .mp-column {
-      background-color: var(--darker-bg);
-      border-right: 1px solid rgba(124, 58, 237, 0.2);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 16px 0;
-      gap: 8px;
-    }
-
-    .mp-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background-color: rgba(168, 85, 247, 0.2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--violet-neon);
-      cursor: pointer;
-      transition: all 0.2s ease;
-      position: relative;
-    }
-
-    .mp-icon:hover {
-      background-color: rgba(168, 85, 247, 0.4);
-      box-shadow: var(--glow);
-    }
-
-    .mp-icon.active {
-      background-color: var(--violet-neon);
-      color: white;
-      box-shadow: var(--glow-active);
-    }
-
-    .mp-icon::after {
-      content: '';
-      position: absolute;
-      top: -4px;
-      right: -4px;
-      width: 12px;
-      height: 12px;
-      background-color: var(--pink-neon);
-      border-radius: 50%;
-      display: none;
-    }
-
-    .mp-icon.unread::after {
-      display: block;
-    }
-
-    /* Colonne Hubs */
-    .hubs-column {
-      background-color: var(--darker-bg);
-      border-right: 1px solid rgba(124, 58, 237, 0.2);
-      display: flex;
-      flex-direction: column;
-      padding: 16px 0;
-    }
-
-    .hubs-header {
-      padding: 0 16px 16px;
-      border-bottom: 1px solid rgba(124, 58, 237, 0.2);
-      margin-bottom: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .hubs-header h2 {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .add-hub {
-      background-color: rgba(168, 85, 247, 0.2);
-      border: none;
-      border-radius: 50%;
-      width: 24px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--violet-neon);
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .add-hub:hover {
-      background-color: rgba(168, 85, 247, 0.4);
-      box-shadow: var(--glow);
-    }
-
-    .hubs-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: 0 8px;
-    }
-
-    .hub-item {
-      height: 48px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      padding: 0 12px;
-      margin-bottom: 4px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      position: relative;
-    }
-
-    .hub-item:hover {
-      background-color: rgba(168, 85, 247, 0.1);
-    }
-
-    .hub-item.active {
-      background-color: rgba(168, 85, 247, 0.2);
-      color: var(--violet-neon);
-    }
-
-    .hub-icon {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background-color: var(--violet-neon);
-      margin-right: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: bold;
-    }
-
-    /* Colonne Chat */
-    .chat-column {
-      display: flex;
-      flex-direction: column;
-      background-color: var(--dark-bg);
-    }
-
-    .chat-header {
-      padding: 16px;
-      border-bottom: 1px solid rgba(124, 58, 237, 0.2);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .chat-header-icon {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background-color: var(--violet-neon);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: bold;
-    }
-
-    .chat-messages {
-      flex: 1;
-      padding: 16px;
-      overflow-y: auto;
-    }
-
-    .message {
-      display: flex;
-      gap: 12px;
+    .error-message {
+      color: #f87171;
+      font-size: 0.9rem;
+      margin-top: -16px;
       margin-bottom: 16px;
-    }
-
-    .message-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background-color: var(--violet-neon);
-    }
-
-    .message-content {
-      flex: 1;
-    }
-
-    .message-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 4px;
-    }
-
-    .message-username {
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-
-    .message-pronouns {
-      background-color: rgba(168, 85, 247, 0.2);
-      color: var(--violet-neon);
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 12px;
-    }
-
-    .message-time {
-      color: var(--text-secondary);
-      font-size: 12px;
-    }
-
-    .message-text {
-      color: var(--text-primary);
-    }
-
-    .chat-input {
-      padding: 16px;
-      border-top: 1px solid rgba(124, 58, 237, 0.2);
-    }
-
-    .chat-input-area {
-      background-color: rgba(124, 58, 237, 0.1);
-      border: 1px solid rgba(124, 58, 237, 0.3);
-      border-radius: 8px;
-      padding: 12px 16px;
-      color: var(--text-primary);
-      font-size: 16px;
-      resize: none;
-      min-height: 48px;
-      max-height: 120px;
-      overflow-y: auto;
-    }
-
-    /* Colonne Membres */
-    .members-column {
-      background-color: var(--darker-bg);
-      border-left: 1px solid rgba(124, 58, 237, 0.2);
-      display: flex;
-      flex-direction: column;
-      padding: 16px 0;
-    }
-
-    .members-header {
-      padding: 0 16px 16px;
-      border-bottom: 1px solid rgba(124, 58, 237, 0.2);
-      margin-bottom: 8px;
-    }
-
-    .members-header h2 {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .members-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: 0 8px;
-    }
-
-    .member-item {
-      height: 48px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      padding: 0 12px;
-      margin-bottom: 4px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .member-item:hover {
-      background-color: rgba(168, 85, 247, 0.1);
-    }
-
-    .member-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background-color: var(--violet-neon);
-      margin-right: 12px;
-    }
-
-    .member-status {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      margin-left: auto;
-    }
-
-    .status-online {
-      background-color: #22c55e;
-    }
-
-    .status-idle {
-      background-color: #f59e0b;
-    }
-
-    .status-dnd {
-      background-color: #ef4444;
-    }
-
-    .status-offline {
-      background-color: var(--text-secondary);
-    }
-
-    /* Bottom Bar */
-    .bottom-bar {
-      position: absolute;
-      bottom: 16px;
-      left: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .bottom-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background-color: rgba(168, 85, 247, 0.2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--violet-neon);
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .bottom-icon:hover {
-      background-color: rgba(168, 85, 247, 0.4);
-      box-shadow: var(--glow);
-    }
-
-    .bottom-icon.active {
-      background-color: var(--violet-neon);
-      color: white;
-      box-shadow: var(--glow-active);
-    }
-
-    /* Profile Modal */
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.7);
-      z-index: 2000;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .modal-content {
-      background-color: var(--darker-bg);
-      border: 1px solid rgba(124, 58, 237, 0.3);
-      border-radius: 12px;
-      width: 500px;
-      max-width: 90%;
-      max-height: 90vh;
-      overflow-y: auto;
-      box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
-    }
-
-    .modal-header {
-      padding: 20px;
-      border-bottom: 1px solid rgba(124, 58, 237, 0.2);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .modal-close {
-      background: none;
-      border: none;
-      color: var(--text-secondary);
-      font-size: 20px;
-      cursor: pointer;
-      transition: color 0.2s ease;
-    }
-
-    .modal-close:hover {
-      color: var(--violet-neon);
-    }
-
-    .profile-banner {
-      height: 120px;
-      background: linear-gradient(135deg, var(--deep-purple), var(--violet-neon));
-      position: relative;
-    }
-
-    .profile-avatar {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      background-color: var(--violet-neon);
-      position: absolute;
-      bottom: -40px;
-      left: 20px;
-      border: 4px solid var(--darker-bg);
-    }
-
-    .profile-info {
-      padding: 20px;
-      padding-top: 50px;
-    }
-
-    .profile-username {
-      font-size: 20px;
-      font-weight: 600;
-      color: var(--text-primary);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .profile-pronouns {
-      background-color: rgba(168, 85, 247, 0.2);
-      color: var(--violet-neon);
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 14px;
-    }
-
-    .profile-bio {
-      margin-top: 16px;
-      padding: 12px;
-      background-color: rgba(124, 58, 237, 0.1);
-      border-radius: 8px;
-      border: 1px solid rgba(124, 58, 237, 0.3);
-      color: var(--text-primary);
-    }
-
-    .profile-status {
-      margin-top: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .profile-status-select {
-      flex: 1;
-      background-color: rgba(124, 58, 237, 0.1);
-      border: 1px solid rgba(124, 58, 237, 0.3);
-      border-radius: 8px;
-      padding: 8px 12px;
-      color: var(--text-primary);
-    }
-
-    .profile-save {
-      background-color: var(--violet-neon);
-      border: none;
-      border-radius: 8px;
-      padding: 8px 16px;
-      color: white;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .profile-save:hover {
-      background-color: var(--pink-neon);
-    }
-
-    /* Settings Modal */
-    .settings-modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.7);
-      z-index: 2000;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .settings-content {
-      background-color: var(--darker-bg);
-      border: 1px solid rgba(124, 58, 237, 0.3);
-      border-radius: 12px;
-      width: 500px;
-      max-width: 90%;
-      box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
-    }
-
-    .settings-header {
-      padding: 20px;
-      border-bottom: 1px solid rgba(124, 58, 237, 0.2);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .settings-tabs {
-      display: flex;
-      border-bottom: 1px solid rgba(124, 58, 237, 0.2);
-    }
-
-    .settings-tab {
-      flex: 1;
-      padding: 12px;
       text-align: center;
-      cursor: pointer;
-      color: var(--text-secondary);
-      transition: all 0.2s ease;
-    }
-
-    .settings-tab.active {
-      color: var(--violet-neon);
-      border-bottom: 2px solid var(--violet-neon);
-    }
-
-    .settings-section {
-      padding: 20px;
-    }
-
-    .settings-section h3 {
-      color: var(--violet-neon);
-      margin-bottom: 12px;
-    }
-
-    .logout-button {
-      background-color: #ef4444;
-      border: none;
-      border-radius: 8px;
-      padding: 12px;
-      color: white;
-      font-weight: 600;
-      cursor: pointer;
-      width: 100%;
-      transition: all 0.2s ease;
-    }
-
-    .logout-button:hover {
-      background-color: #dc2626;
     }
   </style>
 </head>
 <body>
-  <!-- Auth Screen -->
-  <div class="auth-screen" id="authScreen">
+  <div class="particles" id="particles"></div>
+  <div class="auth-screen">
+    <h1 class="nexus-logo">NEXUS</h1>
+    <p class="welcome-message">Bienvenue dans le hub inclusif où chaque voix compte. Rejoins une communauté qui célèbre la diversité.</p>
+    
     <div class="auth-container">
       <div class="auth-tabs">
-        <div class="auth-tab active" id="loginTab">Connexion</div>
-        <div class="auth-tab" id="registerTab">Inscription</div>
+        <div class="auth-tab active" data-tab="login">Connexion</div>
+        <div class="auth-tab" data-tab="register">Inscription</div>
       </div>
-      <div class="auth-error" id="authError"></div>
-      <div class="auth-form" id="loginForm">
-        <input type="text" class="auth-input" id="loginUsername" placeholder="Pseudo" required>
-        <input type="password" class="auth-input" id="loginPassword" placeholder="Mot de passe" required>
-        <button class="auth-button" id="loginButton">Se connecter</button>
-      </div>
-      <div class="auth-form" id="registerForm" style="display: none;">
-        <input type="text" class="auth-input" id="registerUsername" placeholder="Pseudo" required>
-        <input type="password" class="auth-input" id="registerPassword" placeholder="Mot de passe" required>
-        <select class="auth-select" id="registerPronouns">
-          <option value="iel">iel</option>
-          <option value="il">il</option>
-          <option value="elle">elle</option>
-          <option value="iel/il">iel/il</option>
-          <option value="iel/elle">iel/elle</option>
-          <option value="Autre">Autre</option>
-        </select>
-        <button class="auth-button" id="registerButton">S'inscrire</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Main UI -->
-  <div class="main-ui" id="mainUI">
-    <!-- Colonne MPs -->
-    <div class="mp-column">
-      <div class="mp-icon active" id="homeIcon" title="Accueil">
-        <i class="fas fa-home"></i>
-      </div>
-      <div class="mp-icon" id="mpIcon" title="Messages Privés">
-        <i class="fas fa-comment-dots"></i>
-      </div>
-      <div class="mp-icon unread" id="notificationsIcon" title="Notifications">
-        <i class="fas fa-bell"></i>
-      </div>
-    </div>
-
-    <!-- Colonne Hubs -->
-    <div class="hubs-column">
-      <div class="hubs-header">
-        <h2>Hubs</h2>
-        <button class="add-hub" id="addHubButton" title="Créer un Hub">
-          <i class="fas fa-plus"></i>
-        </button>
-      </div>
-      <div class="hubs-list" id="hubsList">
-        <!-- Hubs seront chargés dynamiquement -->
-      </div>
-    </div>
-
-    <!-- Colonne Chat -->
-    <div class="chat-column">
-      <div class="chat-header" id="chatHeader">
-        <div class="chat-header-icon">#</div>
-        <span id="chatHeaderName">général</span>
-      </div>
-      <div class="chat-messages" id="chatMessages">
-        <!-- Messages seront chargés dynamiquement -->
-      </div>
-      <div class="chat-input">
-        <div class="chat-input-area" id="chatInput" contenteditable="true" placeholder="Écrire un message..."></div>
-      </div>
-    </div>
-
-    <!-- Colonne Membres -->
-    <div class="members-column">
-      <div class="members-header">
-        <h2>Membres</h2>
-      </div>
-      <div class="members-list" id="membersList">
-        <!-- Membres seront chargés dynamiquement -->
-      </div>
-    </div>
-
-    <!-- Bottom Bar -->
-    <div class="bottom-bar">
-      <div class="bottom-icon" id="membersToggle" title="Afficher/Masquer les membres">
-        <i class="fas fa-users"></i>
-      </div>
-      <div class="bottom-icon" id="settingsIcon" title="Paramètres">
-        <i class="fas fa-cog"></i>
-      </div>
-      <div class="bottom-icon" id="userProfile" title="Mon Profil">
-        <img src="" alt="Avatar" id="userAvatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
-      </div>
-    </div>
-  </div>
-
-  <!-- Profile Modal -->
-  <div class="modal" id="profileModal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>Profil</h2>
-        <button class="modal-close" id="closeProfileModal">&times;</button>
-      </div>
-      <div class="profile-banner">
-        <div class="profile-avatar" id="profileAvatar"></div>
-      </div>
-      <div class="profile-info">
-        <div class="profile-username">
-          <span id="profileUsername"></span>
-          <span class="profile-pronouns" id="profilePronouns"></span>
+      
+      <div class="auth-form" id="login-form">
+        <div class="form-group">
+          <input type="text" class="auth-input" id="login-username" placeholder="Pseudo" required>
+          <i class="fas fa-user input-icon"></i>
         </div>
-        <div class="profile-bio" id="profileBio" contenteditable="true">Ajoutez une bio...</div>
-        <div class="profile-status">
-          <select class="profile-status-select" id="profileStatus">
-            <option value="online">En ligne</option>
-            <option value="idle">Inactif</option>
-            <option value="dnd">Ne pas déranger</option>
-            <option value="offline">Hors ligne</option>
-          </select>
-          <button class="profile-save" id="saveProfile">Sauvegarder</button>
+        <div class="form-group">
+          <input type="password" class="auth-input" id="login-password" placeholder="Mot de passe" required>
+          <i class="fas fa-lock input-icon"></i>
         </div>
+        <div class="error-message" id="login-error"></div>
+        <button class="auth-button" id="login-submit">Se connecter</button>
       </div>
-    </div>
-  </div>
-
-  <!-- Settings Modal -->
-  <div class="settings-modal" id="settingsModal">
-    <div class="settings-content">
-      <div class="settings-header">
-        <h2>Paramètres</h2>
-        <button class="modal-close" id="closeSettingsModal">&times;</button>
-      </div>
-      <div class="settings-tabs">
-        <div class="settings-tab active" id="settingsGeneralTab">Général</div>
-        <div class="settings-tab" id="settingsNotificationsTab">Notifications</div>
-        <div class="settings-tab" id="settingsAppearanceTab">Apparence</div>
-      </div>
-      <div class="settings-section" id="settingsGeneral">
-        <h3>Compte</h3>
-        <button class="logout-button" id="logoutButton">Se déconnecter</button>
-      </div>
-      <div class="settings-section" id="settingsNotifications" style="display: none;">
-        <h3>Notifications</h3>
-        <!-- Contenu notifications -->
-      </div>
-      <div class="settings-section" id="settingsAppearance" style="display: none;">
-        <h3>Apparence</h3>
-        <!-- Contenu apparence -->
-      </div>
-    </div>
-  </div>
-
-  <!-- Create Hub Modal -->
-  <div class="modal" id="createHubModal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>Créer un Hub</h2>
-        <button class="modal-close" id="closeCreateHubModal">&times;</button>
-      </div>
-      <div class="profile-info">
-        <input type="text" class="auth-input" id="hubName" placeholder="Nom du Hub" required>
-        <button class="auth-button" id="createHubButton" style="margin-top: 16px;">Créer</button>
+      
+      <div class="auth-form" id="register-form" style="display: none;">
+        <div class="form-group">
+          <input type="text" class="auth-input" id="register-username" placeholder="Pseudo (2-32 caractères)" required>
+          <i class="fas fa-user input-icon"></i>
+        </div>
+        <div class="form-group">
+          <input type="password" class="auth-input" id="register-password" placeholder="Mot de passe" required>
+          <i class="fas fa-lock input-icon"></i>
+        </div>
+        <div class="form-group">
+          <input type="password" class="auth-input" id="register-confirm-password" placeholder="Confirmer le mot de passe" required>
+          <i class="fas fa-lock input-icon"></i>
+        </div>
+        <div class="form-group">
+          <div style="color: var(--text-secondary); margin-bottom: 8px;">Tes pronoms :</div>
+          <div class="pronouns-selector">
+            <div class="pronoun-badge active" data-pronoun="iel">iel</div>
+            <div class="pronoun-badge" data-pronoun="il">il</div>
+            <div class="pronoun-badge" data-pronoun="elle">elle</div>
+            <div class="pronoun-badge" data-pronoun="iel/il">iel/il</div>
+            <div class="pronoun-badge" data-pronoun="iel/elle">iel/elle</div>
+            <div class="pronoun-badge" data-pronoun="autre">autre</div>
+          </div>
+        </div>
+        <div class="error-message" id="register-error"></div>
+        <button class="auth-button" id="register-submit">Entrer dans le Nexus</button>
       </div>
     </div>
   </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // Check auth state
-      const token = localStorage.getItem('nexus_token');
-      const authScreen = document.getElementById('authScreen');
-      const mainUI = document.getElementById('mainUI');
-
-      if (!token) {
-        authScreen.style.display = 'flex';
-      } else {
-        authScreen.style.display = 'none';
-        mainUI.style.display = 'grid';
-        loadUserData();
-        connectSocket();
+    document.addEventListener('DOMContentLoaded', function() {
+      // Particles effect
+      const particlesContainer = document.getElementById('particles');
+      for (let i = 0; i < 50; i++) {
+        const particle = document.createElement('div');
+        particle.classList.add('particle');
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.width = Math.random() * 8 + 2 + 'px';
+        particle.style.height = particle.style.width;
+        particle.style.animationDelay = Math.random() * 15 + 's';
+        particle.style.animationDuration = Math.random() * 10 + 10 + 's';
+        particlesContainer.appendChild(particle);
       }
 
-      // Auth tabs
-      const loginTab = document.getElementById('loginTab');
-      const registerTab = document.getElementById('registerTab');
-      const loginForm = document.getElementById('loginForm');
-      const registerForm = document.getElementById('registerForm');
-
-      loginTab.addEventListener('click', () => {
-        loginTab.classList.add('active');
-        registerTab.classList.remove('active');
-        loginForm.style.display = 'flex';
-        registerForm.style.display = 'none';
-      });
-
-      registerTab.addEventListener('click', () => {
-        registerTab.classList.add('active');
-        loginTab.classList.remove('active');
-        registerForm.style.display = 'flex';
-        loginForm.style.display = 'none';
-      });
-
-      // Auth functions
-      const loginButton = document.getElementById('loginButton');
-      const registerButton = document.getElementById('registerButton');
-      const authError = document.getElementById('authError');
-
-      loginButton.addEventListener('click', async () => {
-        const username = document.getElementById('loginUsername').value;
-        const password = document.getElementById('loginPassword').value;
-
-        try {
-          const response = await fetch('/api/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
-          });
-
-          const data = await response.json();
-
-          if (response.ok) {
-            localStorage.setItem('nexus_token', data.token);
-            authScreen.style.display = 'none';
-            mainUI.style.display = 'grid';
-            loadUserData();
-            connectSocket();
+      // Tab switching
+      const tabs = document.querySelectorAll('.auth-tab');
+      const loginForm = document.getElementById('login-form');
+      const registerForm = document.getElementById('register-form');
+      
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          tabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          
+          if (tab.dataset.tab === 'login') {
+            loginForm.style.display = 'flex';
+            registerForm.style.display = 'none';
           } else {
-            authError.textContent = data.error || 'Échec de la connexion';
+            loginForm.style.display = 'none';
+            registerForm.style.display = 'flex';
           }
-        } catch (error) {
-          authError.textContent = 'Erreur réseau';
+        });
+      });
+
+      // Pronouns selector
+      const pronounBadges = document.querySelectorAll('.pronoun-badge');
+      pronounBadges.forEach(badge => {
+        badge.addEventListener('click', () => {
+          pronounBadges.forEach(b => b.classList.remove('active'));
+          badge.classList.add('active');
+        });
+      });
+
+      // Login functionality
+      const loginSubmit = document.getElementById('login-submit');
+      const loginUsername = document.getElementById('login-username');
+      const loginPassword = document.getElementById('login-password');
+      const loginError = document.getElementById('login-error');
+      
+      loginSubmit.addEventListener('click', async () => {
+        loginError.textContent = '';
+        
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: loginUsername.value,
+            password: loginPassword.value
+          })
+        });
+        
+        const data = await response.json();
+        if (response.ok) {
+          localStorage.setItem('nexus_token', data.token);
+          window.location.reload();
+        } else {
+          loginError.textContent = data.error || 'Échec de la connexion';
         }
       });
 
-      registerButton.addEventListener('click', async () => {
-        const username = document.getElementById('registerUsername').value;
-        const password = document.getElementById('registerPassword').value;
-        const pronouns = document.getElementById('registerPronouns').value;
-
-        try {
-          const response = await fetch('/api/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password, pronouns })
-          });
-
-          const data = await response.json();
-
-          if (response.ok) {
-            localStorage.setItem('nexus_token', data.token);
-            authScreen.style.display = 'none';
-            mainUI.style.display = 'grid';
-            loadUserData();
-            connectSocket();
-          } else {
-            authError.textContent = data.error || 'Échec de l\'inscription';
-          }
-        } catch (error) {
-          authError.textContent = 'Erreur réseau';
+      // Register functionality
+      const registerSubmit = document.getElementById('register-submit');
+      const registerUsername = document.getElementById('register-username');
+      const registerPassword = document.getElementById('register-password');
+      const registerConfirmPassword = document.getElementById('register-confirm-password');
+      const registerError = document.getElementById('register-error');
+      
+      registerSubmit.addEventListener('click', async () => {
+        registerError.textContent = '';
+        
+        if (registerPassword.value !== registerConfirmPassword.value) {
+          registerError.textContent = 'Les mots de passe ne correspondent pas';
+          return;
         }
-      });
-
-      // UI Functions
-      function loadUserData() {
-        const token = localStorage.getItem('nexus_token');
-        if (!token) return;
-
-        fetch('/api/me', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.error) {
-            localStorage.removeItem('nexus_token');
-            authScreen.style.display = 'flex';
-            mainUI.style.display = 'none';
-            return;
-          }
-
-          document.getElementById('userAvatar').src = data.avatar;
-          document.getElementById('profileAvatar').style.backgroundImage = `url(${data.avatar})`;
-          document.getElementById('profileUsername').textContent = data.username;
-          document.getElementById('profilePronouns').textContent = data.pronouns;
-          document.getElementById('profileStatus').value = data.status;
-        });
-      }
-
-      // Socket.io
-      let socket;
-      function connectSocket() {
-        const token = localStorage.getItem('nexus_token');
-        if (!token) return;
-
-        socket = io({
-          auth: { token }
-        });
-
-        socket.on('connect', () => {
-          console.log('Connected to socket');
-        });
-
-        socket.on('new-msg', (message) => {
-          addMessageToChat(message);
-        });
-
-        socket.on('channel-history', (messages) => {
-          loadMessages(messages);
-        });
-
-        socket.on('user-status', (statusUpdate) => {
-          updateUserStatus(statusUpdate);
-        });
-      }
-
-      // Chat functions
-      function addMessageToChat(message) {
-        const chatMessages = document.getElementById('chatMessages');
-        const messageElement = document.createElement('div');
-        messageElement.className = 'message';
-        messageElement.innerHTML = `
-          <img src="${message.avatar}" alt="Avatar" class="message-avatar">
-          <div class="message-content">
-            <div class="message-header">
-              <span class="message-username">${message.username}</span>
-              <span class="message-pronouns">${message.pronouns}</span>
-              <span class="message-time">${new Date(message.created_at).toLocaleTimeString()}</span>
-            </div>
-            <div class="message-text">${message.content}</div>
-          </div>
-        `;
-        chatMessages.appendChild(messageElement);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-      }
-
-      function loadMessages(messages) {
-        const chatMessages = document.getElementById('chatMessages');
-        chatMessages.innerHTML = '';
-        messages.forEach(message => addMessageToChat(message));
-      }
-
-      // UI Event Listeners
-      document.getElementById('settingsIcon').addEventListener('click', () => {
-        document.getElementById('settingsModal').style.display = 'flex';
-      });
-
-      document.getElementById('closeSettingsModal').addEventListener('click', () => {
-        document.getElementById('settingsModal').style.display = 'none';
-      });
-
-      document.getElementById('userProfile').addEventListener('click', () => {
-        document.getElementById('profileModal').style.display = 'flex';
-      });
-
-      document.getElementById('closeProfileModal').addEventListener('click', () => {
-        document.getElementById('profileModal').style.display = 'none';
-      });
-
-      document.getElementById('saveProfile').addEventListener('click', () => {
-        const bio = document.getElementById('profileBio').textContent;
-        const status = document.getElementById('profileStatus').value;
-        const token = localStorage.getItem('nexus_token');
-
-        fetch('/api/update-profile', {
+        
+        const selectedPronoun = document.querySelector('.pronoun-badge.active').dataset.pronoun;
+        
+        const response = await fetch('/api/register', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ bio, status })
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            document.getElementById('profileModal').style.display = 'none';
-            socket.emit('user-status', { status });
-          }
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: registerUsername.value,
+            password: registerPassword.value,
+            pronouns: selectedPronoun
+          })
         });
-      });
-
-      document.getElementById('logoutButton').addEventListener('click', () => {
-        localStorage.removeItem('nexus_token');
-        authScreen.style.display = 'flex';
-        mainUI.style.display = 'none';
-        if (socket) socket.disconnect();
-      });
-
-      document.getElementById('membersToggle').addEventListener('click', () => {
-        const membersColumn = document.querySelector('.members-column');
-        membersColumn.style.display = membersColumn.style.display === 'none' ? 'flex' : 'none';
-      });
-
-      document.getElementById('addHubButton').addEventListener('click', () => {
-        document.getElementById('createHubModal').style.display = 'flex';
-      });
-
-      document.getElementById('closeCreateHubModal').addEventListener('click', () => {
-        document.getElementById('createHubModal').style.display = 'none';
-      });
-
-      document.getElementById('createHubButton').addEventListener('click', () => {
-        const hubName = document.getElementById('hubName').value;
-        const token = localStorage.getItem('nexus_token');
-
-        fetch('/api/create-hub', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ name: hubName })
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            document.getElementById('createHubModal').style.display = 'none';
-            document.getElementById('hubName').value = '';
-          }
-        });
-      });
-
-      // Close modals when clicking outside
-n      window.addEventListener('click', (event) => {
-        const profileModal = document.getElementById('profileModal');
-        const settingsModal = document.getElementById('settingsModal');
-        const createHubModal = document.getElementById('createHubModal');
-
-        if (event.target === profileModal) profileModal.style.display = 'none';
-        if (event.target === settingsModal) settingsModal.style.display = 'none';
-        if (event.target === createHubModal) createHubModal.style.display = 'none';
+        
+        const data = await response.json();
+        if (response.ok) {
+          localStorage.setItem('nexus_token', data.token);
+          window.location.reload();
+        } else {
+          registerError.textContent = data.error || 'Échec de l\'inscription';
+        }
       });
     });
   </script>
