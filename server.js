@@ -1,4 +1,4 @@
-// server.js — NEXUS Backend V2 + AI Updater intégré
+// server.js — NEXUS Backend V2 + AI Updater Gemini
 require('dotenv').config();
 
 const express  = require('express');
@@ -23,17 +23,15 @@ const io     = new Server(server, { cors: { origin: '*' } });
 
 const PORT         = process.env.PORT || 4242;
 const JWT_SECRET   = process.env.JWT_SECRET || 'nexus-dev-secret-CHANGE-ME';
-const MISTRAL_KEY  = process.env.MISTRAL_API_KEY || '';
+const GEMINI_KEY   = process.env.GEMINI_API_KEY || '';
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
 const GITHUB_REPO  = process.env.GITHUB_REPO || 'LUWUANA/nexus';
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static('public'));
 
-// ─── Sessions Socket ──────────────────────────────────────────────────────────
 const sessions = new Map();
 
-// ─── Helper JWT ───────────────────────────────────────────────────────────────
 function signToken(userId) {
   return jwt.sign({ sub: userId }, JWT_SECRET, { expiresIn: '7d' });
 }
@@ -42,7 +40,6 @@ function verifyToken(token) {
   catch { return null; }
 }
 
-// ─── Helper HTTPS request ────────────────────────────────────────────────────
 function httpsRequest(options, body) {
   return new Promise((resolve, reject) => {
     const req = https.request(options, (res) => {
@@ -56,7 +53,7 @@ function httpsRequest(options, body) {
   });
 }
 
-// ─── REST : Auth ──────────────────────────────────────────────────────────────
+// ─── Auth ─────────────────────────────────────────────────────────────────────
 app.post('/api/register', (req, res) => {
   const { username, password, pronouns } = req.body;
   if (!username || !password) return res.status(400).json({ error: 'Pseudo et mot de passe requis' });
@@ -97,7 +94,7 @@ app.post('/api/login', (req, res) => {
   res.json({ token, user });
 });
 
-// ─── REST : Données ───────────────────────────────────────────────────────────
+// ─── Données ──────────────────────────────────────────────────────────────────
 app.get('/api/servers', (req, res) => {
   const servers = getServers.all();
   const result  = servers.map(srv => ({ ...srv, channels: getChannelsByServer.all(srv.id) }));
@@ -114,16 +111,13 @@ app.get('/api/ai/file', async (req, res) => {
   const { path } = req.query;
   if (!path) return res.status(400).json({ error: 'path requis' });
 
-  const token = GITHUB_TOKEN;
-  const repo  = GITHUB_REPO;
-
   try {
     const result = await httpsRequest({
       hostname: 'api.github.com',
-      path:     `/repos/${repo}/contents/${path}`,
+      path:     `/repos/${GITHUB_REPO}/contents/${path}`,
       method:   'GET',
       headers: {
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${GITHUB_TOKEN}`,
         'Accept':        'application/vnd.github+json',
         'User-Agent':    'nexus-ai-updater',
       },
@@ -141,101 +135,124 @@ app.get('/api/ai/file', async (req, res) => {
   }
 });
 
-// ─── AI Updater : Générer le code via Mistral ────────────────────────────────
+// ─── AI Updater : Générer via Gemini ─────────────────────────────────────────
 app.post('/api/ai/generate', async (req, res) => {
   const { request, codeContext } = req.body;
   if (!request) return res.status(400).json({ error: 'request requis' });
-  if (!MISTRAL_KEY) return res.status(500).json({ error: 'MISTRAL_API_KEY non configurée dans .env' });
+  if (!GEMINI_KEY) return res.status(500).json({ error: 'GEMINI_API_KEY non configurée dans .env' });
 
-  const systemPrompt = `Tu es un expert Node.js/Express/Socket.io qui maintient NEXUS, un clone Discord open-source inclusif.
-Tu reçois une demande et un extrait du code source.
+  const prompt = `Tu es un expert Node.js/Express/Socket.io qui maintient NEXUS, un clone Discord open-source inclusif.
+Tu reçois une demande et le code source complet.
 Tu réponds UNIQUEMENT avec un objet JSON valide, sans markdown ni backticks.
 Format exact :
 {"branch_name":"feature/nom-kebab","pr_title":"feat: titre court","pr_body":"## Description\\nExplication.","files":{"public/index.html":"contenu complet"},"commit_message":"feat: description courte"}
+
 RÈGLES ABSOLUES :
 - Ne modifier QUE public/index.html sauf demande explicite
 - Ne JAMAIS modifier server.js, db.js, package.json
-- Le contenu du fichier doit être COMPLET et valide
-- Pas de redirection vers des pages externes
-- Garder toute la logique Socket.io existante`;
+- Le contenu du fichier doit être COMPLET et valide (pas tronqué)
+- Pas de redirection vers des pages externes (login.html etc)
+- Garder toute la logique Socket.io existante (auth, join-channel, send-msg, new-msg, channel-history)
+- Envelopper TOUT le JS dans document.addEventListener('DOMContentLoaded', function() { ... })
+- Pas de regex complexes
+- Pas de window.xxx au niveau global
+
+Code source actuel :
+
+${codeContext}
+
+---
+
+Demande : ${request}`;
 
   const payload = JSON.stringify({
-    model: 'mistral-large-latest',
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: `Code source actuel :\n\n${codeContext}\n\n---\n\nDemande : ${request}` }
-    ],
-    max_tokens: 16000,
-    temperature: 0.05,
-    response_format: { type: 'json_object' },
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: {
+      temperature: 0.05,
+      maxOutputTokens: 32768,
+      responseMimeType: 'application/json',
+    }
   });
 
   try {
     const result = await httpsRequest({
-      hostname: 'api.mistral.ai',
-      path:     '/v1/chat/completions',
+      hostname: 'generativelanguage.googleapis.com',
+      path:     `/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
       method:   'POST',
       headers: {
-        'Authorization': `Bearer ${MISTRAL_KEY}`,
-        'Content-Type':  'application/json',
+        'Content-Type':   'application/json',
         'Content-Length': Buffer.byteLength(payload),
       },
     }, payload);
 
     if (result.status !== 200) {
-      return res.status(result.status).json({ error: `Mistral: ${result.status} — ${result.body}` });
+      return res.status(result.status).json({ error: `Gemini: ${result.status} — ${result.body.slice(0, 200)}` });
     }
 
     const data = JSON.parse(result.body);
 
-    if (data.choices[0].finish_reason === 'length') {
-      return res.status(422).json({ error: 'Réponse tronquée — simplifie la demande' });
+    if (!data.candidates || !data.candidates[0]) {
+      return res.status(422).json({ error: 'Gemini: pas de réponse générée' });
     }
 
-    const changes = JSON.parse(data.choices[0].message.content);
+    const raw = data.candidates[0].content.parts[0].text.trim();
+
+    let changes;
+    try {
+      changes = JSON.parse(raw);
+    } catch(e) {
+      const match = raw.match(/\{[\s\S]*\}/);
+      if (match) {
+        try { changes = JSON.parse(match[0]); }
+        catch { return res.status(422).json({ error: 'JSON invalide — réessaie' }); }
+      } else {
+        return res.status(422).json({ error: 'Réponse Gemini non parseable' });
+      }
+    }
+
+    if (!changes.branch_name || !changes.files) {
+      return res.status(422).json({ error: 'Réponse Gemini incomplète' });
+    }
+
     res.json(changes);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });
 
-// ─── AI Updater : Créer la branche + commit + PR ─────────────────────────────
+// ─── AI Updater : Créer branche + commit + PR ─────────────────────────────────
 app.post('/api/ai/pull-request', async (req, res) => {
   const { changes } = req.body;
   if (!changes) return res.status(400).json({ error: 'changes requis' });
 
-  const token = GITHUB_TOKEN;
-  const repo  = GITHUB_REPO;
-
   try {
-    // Récupérer SHA de main
+    // SHA de main
     const refResult = await httpsRequest({
       hostname: 'api.github.com',
-      path:     `/repos/${repo}/git/ref/heads/main`,
+      path:     `/repos/${GITHUB_REPO}/git/ref/heads/main`,
       method:   'GET',
-      headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json', 'User-Agent': 'nexus-ai-updater' },
+      headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github+json', 'User-Agent': 'nexus-ai-updater' },
     });
     if (refResult.status !== 200) throw new Error(`Lecture main: ${refResult.status}`);
     const baseSha = JSON.parse(refResult.body).object.sha;
 
-    // Créer la branche
+    // Créer branche
     const branchPayload = JSON.stringify({ ref: `refs/heads/${changes.branch_name}`, sha: baseSha });
     const branchResult = await httpsRequest({
       hostname: 'api.github.com',
-      path:     `/repos/${repo}/git/refs`,
+      path:     `/repos/${GITHUB_REPO}/git/refs`,
       method:   'POST',
-      headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json', 'User-Agent': 'nexus-ai-updater', 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(branchPayload) },
+      headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github+json', 'User-Agent': 'nexus-ai-updater', 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(branchPayload) },
     }, branchPayload);
     if (branchResult.status !== 201) throw new Error(`Branche: ${JSON.parse(branchResult.body).message}`);
 
-    // Commiter chaque fichier
+    // Commiter les fichiers
     for (const [filePath, content] of Object.entries(changes.files)) {
-      // Récupérer SHA du fichier si existant
       const fileResult = await httpsRequest({
         hostname: 'api.github.com',
-        path:     `/repos/${repo}/contents/${filePath}?ref=${changes.branch_name}`,
+        path:     `/repos/${GITHUB_REPO}/contents/${filePath}?ref=${changes.branch_name}`,
         method:   'GET',
-        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json', 'User-Agent': 'nexus-ai-updater' },
+        headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github+json', 'User-Agent': 'nexus-ai-updater' },
       });
       const fileSha = fileResult.status === 200 ? JSON.parse(fileResult.body).sha : undefined;
 
@@ -249,9 +266,9 @@ app.post('/api/ai/pull-request', async (req, res) => {
 
       const commitResult = await httpsRequest({
         hostname: 'api.github.com',
-        path:     `/repos/${repo}/contents/${filePath}`,
+        path:     `/repos/${GITHUB_REPO}/contents/${filePath}`,
         method:   'PUT',
-        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json', 'User-Agent': 'nexus-ai-updater', 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(commitPayload) },
+        headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github+json', 'User-Agent': 'nexus-ai-updater', 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(commitPayload) },
       }, commitPayload);
 
       if (commitResult.status !== 200 && commitResult.status !== 201) {
@@ -262,19 +279,18 @@ app.post('/api/ai/pull-request', async (req, res) => {
     // Créer la PR
     const prPayload = JSON.stringify({
       title: changes.pr_title,
-      body:  changes.pr_body + `\n\n---\n*🤖 Généré par NEXUS AI Updater*`,
+      body:  changes.pr_body + `\n\n---\n*🤖 Généré par NEXUS AI Updater (Gemini 2.0 Flash)*`,
       head:  changes.branch_name,
       base:  'main',
     });
     const prResult = await httpsRequest({
       hostname: 'api.github.com',
-      path:     `/repos/${repo}/pulls`,
+      path:     `/repos/${GITHUB_REPO}/pulls`,
       method:   'POST',
-      headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json', 'User-Agent': 'nexus-ai-updater', 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(prPayload) },
+      headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github+json', 'User-Agent': 'nexus-ai-updater', 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(prPayload) },
     }, prPayload);
 
     if (prResult.status !== 201) throw new Error(`PR: ${JSON.parse(prResult.body).message}`);
-
     const pr = JSON.parse(prResult.body);
     res.json({ url: pr.html_url, title: pr.title, branch: changes.branch_name, files: Object.keys(changes.files) });
 
@@ -345,8 +361,8 @@ io.on('connection', (socket) => {
 // ─── Démarrage ────────────────────────────────────────────────────────────────
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 NEXUS V2 — port ${PORT}`);
-  console.log(`   DB      : ${process.env.DB_PATH || './data/nexus.db'}`);
-  console.log(`   Mistral : ${MISTRAL_KEY ? '✅ configuré' : '⚠️  manquant dans .env'}`);
-  console.log(`   GitHub  : ${GITHUB_TOKEN ? '✅ configuré' : '⚠️  manquant dans .env'}`);
-  console.log(`   Repo    : ${GITHUB_REPO}`);
+  console.log(`   DB     : ${process.env.DB_PATH || './data/nexus.db'}`);
+  console.log(`   Gemini : ${GEMINI_KEY ? '✅ configuré' : '⚠️  manquant dans .env'}`);
+  console.log(`   GitHub : ${GITHUB_TOKEN ? '✅ configuré' : '⚠️  manquant dans .env'}`);
+  console.log(`   Repo   : ${GITHUB_REPO}`);
 });
