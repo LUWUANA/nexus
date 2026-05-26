@@ -38,6 +38,13 @@ if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 // Middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static('public'));
+// Empêche le serveur de servir index.html pour les appels API ou fichiers systèmes
+app.use((req, res, next) => {
+    if (req.url.startsWith('/api') || req.url.endsWith('.js') || req.url.endsWith('.json')) {
+        return next(); // Laisse passer les appels API et fichiers de code
+    }
+    next();
+});
 app.use('/uploads', express.static(UPLOAD_DIR));
 
 // Multer pour uploads
