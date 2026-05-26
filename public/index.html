@@ -3,668 +3,485 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NEXUS — Hubs Inclusifs</title>
+  <title>NEXUS — Clone Discord Ultra-Inclusif</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
-      --deep-purple: #7c3aed;
-      --violet-neon: #a855f7;
-      --pink-neon: #e879f9;
-      --dark-bg: #0d0d1a;
-      --darker-bg: #12122a;
-      --text-primary: #e0e0e0;
-      --text-secondary: #a0a0a0;
-      --glow: 0 0 8px var(--violet-neon);
-      --glow-active: 0 0 12px var(--pink-neon);
+      --deep-purple: #2d1b69;
+      --neon-purple: #9d00ff;
+      --neon-blue: #00d4ff;
+      --dark-bg: #120f1a;
+      --light-text: #e0e0e0;
+      --online: #3ba55d;
+      --offline: #747f8d;
     }
-
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-
     body {
       background-color: var(--dark-bg);
-      color: var(--text-primary);
+      color: var(--light-text);
       display: grid;
-      grid-template-columns: 80px 280px 1fr 240px;
+      grid-template-columns: 80px 240px 1fr 240px;
       grid-template-rows: 100vh;
       overflow: hidden;
     }
-
-    /* Colonne MPs */
-    .mp-column {
-      background-color: var(--darker-bg);
-      border-right: 1px solid rgba(124, 58, 237, 0.2);
+    /* Sidebar gauche */
+    .sidebar {
+      background-color: var(--deep-purple);
+      grid-column: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       padding: 16px 0;
       gap: 8px;
     }
-
-    .mp-icon {
+    .server-icon {
       width: 48px;
       height: 48px;
       border-radius: 50%;
-      background-color: rgba(168, 85, 247, 0.2);
+      background-color: var(--neon-purple);
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--violet-neon);
       cursor: pointer;
-      transition: all 0.2s ease;
-      position: relative;
+      transition: transform 0.2s;
     }
-
-    .mp-icon:hover {
-      background-color: rgba(168, 85, 247, 0.4);
-      box-shadow: var(--glow);
+    .server-icon:hover {
+      transform: scale(1.1);
     }
-
-    .mp-icon.active {
-      background-color: var(--violet-neon);
-      color: white;
-      box-shadow: var(--glow-active);
-    }
-
-    .mp-icon::after {
-      content: '';
-      position: absolute;
-      top: -4px;
-      right: -4px;
-      width: 12px;
-      height: 12px;
-      background-color: var(--pink-neon);
-      border-radius: 50%;
-      display: none;
-    }
-
-    .mp-icon.unread::after {
-      display: block;
-    }
-
-    /* Colonne Hubs */
-    .hubs-column {
-      background-color: var(--darker-bg);
-      border-right: 1px solid rgba(124, 58, 237, 0.2);
-      display: flex;
-      flex-direction: column;
+    /* Server list */
+    .server-list {
+      grid-column: 2;
+      background-color: #1e1a3a;
       padding: 16px 0;
-    }
-
-    .hubs-header {
-      padding: 0 16px 16px;
-      border-bottom: 1px solid rgba(124, 58, 237, 0.2);
-      margin-bottom: 8px;
-    }
-
-    .hubs-header h2 {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .hubs-list {
-      flex: 1;
       overflow-y: auto;
-      padding: 0 8px;
     }
-
-    .hub-item {
-      height: 48px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      padding: 0 12px;
-      margin-bottom: 4px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      position: relative;
-    }
-
-    .hub-item:hover {
-      background-color: rgba(168, 85, 247, 0.2);
-    }
-
-    .hub-item.active {
-      background-color: rgba(124, 58, 237, 0.3);
-    }
-
-    .hub-item.active::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 4px;
-      background-color: var(--violet-neon);
-      border-radius: 0 4px 4px 0;
-    }
-
-    .hub-icon {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background-color: var(--deep-purple);
-      margin-right: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: bold;
-      flex-shrink: 0;
-    }
-
-    .hub-name {
-      font-size: 14px;
-      font-weight: 500;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .add-hub {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background-color: rgba(168, 85, 247, 0.2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--violet-neon);
-      cursor: pointer;
-      margin: 8px auto;
-      transition: all 0.2s ease;
-    }
-
-    .add-hub:hover {
-      background-color: rgba(168, 85, 247, 0.4);
-      box-shadow: var(--glow);
-    }
-
-    /* Colonne Espaces */
-    .espaces-column {
-      display: flex;
-      flex-direction: column;
-      background-color: var(--dark-bg);
-    }
-
-    .espaces-header {
-      padding: 16px 24px;
-      border-bottom: 1px solid rgba(124, 58, 237, 0.2);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .espaces-header h1 {
-      font-size: 16px;
-      font-weight: 600;
-    }
-
-    .espaces-header .channel-type {
-      color: var(--text-secondary);
-      font-size: 14px;
-    }
-
-    .espaces-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px 0;
-    }
-
-    .espace-category {
-      margin-bottom: 16px;
-    }
-
-    .espace-category-header {
-      padding: 0 24px;
-      display: flex;
-      align-items: center;
-      cursor: pointer;
-      color: var(--text-secondary);
-      font-size: 12px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 8px;
-    }
-
-    .espace-item {
-      height: 40px;
+    .server-item {
+      padding: 8px 16px;
+      margin: 4px 8px;
       border-radius: 4px;
+      cursor: pointer;
       display: flex;
       align-items: center;
-      padding: 0 24px;
-      margin-bottom: 2px;
-      cursor: pointer;
-      transition: all 0.2s ease;
+      gap: 8px;
     }
-
-    .espace-item:hover {
-      background-color: rgba(168, 85, 247, 0.1);
+    .server-item:hover {
+      background-color: rgba(157, 0, 255, 0.2);
     }
-
-    .espace-item.active {
-      background-color: rgba(124, 58, 237, 0.2);
-      color: var(--violet-neon);
+    /* Main content */
+    .main-content {
+      grid-column: 3;
+      display: grid;
+      grid-template-rows: 60px 1fr 68px;
+      background-color: #18152a;
     }
-
-    .espace-icon {
-      margin-right: 12px;
-      color: var(--text-secondary);
+    .channel-header {
+      grid-row: 1;
+      background-color: var(--deep-purple);
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.2);
     }
-
-    .espace-name {
-      font-size: 14px;
-      font-weight: 500;
-    }
-
-    .espace-unread {
-      margin-left: auto;
-      width: 8px;
-      height: 8px;
-      background-color: var(--violet-neon);
-      border-radius: 50%;
-    }
-
-    /* Zone de chat */
-    .chat-zone {
-      flex: 1;
+    .messages {
+      grid-row: 2;
+      padding: 16px;
+      overflow-y: auto;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      gap: 12px;
     }
-
-    .messages-container {
-      flex: 1;
-      overflow-y: auto;
-      padding: 24px;
-      background: linear-gradient(to bottom, rgba(13, 13, 26, 0.8), rgba(18, 18, 42, 0.8));
-    }
-
     .message {
       display: flex;
-      margin-bottom: 24px;
-      opacity: 0;
-      animation: fadeIn 0.3s ease forwards;
+      gap: 12px;
     }
-
-    @keyframes fadeIn {
-      to { opacity: 1; }
-    }
-
     .message-avatar {
       width: 40px;
       height: 40px;
       border-radius: 50%;
-      margin-right: 16px;
-      flex-shrink: 0;
+      background-color: var(--neon-blue);
     }
-
     .message-content {
       flex: 1;
     }
-
-    .message-header {
-      display: flex;
-      align-items: center;
-      margin-bottom: 4px;
-    }
-
     .message-username {
-      font-weight: 600;
-      margin-right: 8px;
+      font-weight: bold;
+      color: var(--neon-blue);
     }
-
-    .message-pronouns {
-      background-color: rgba(168, 85, 247, 0.3);
-      color: var(--violet-neon);
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 12px;
-      font-weight: 500;
+    .message-timestamp {
+      color: #747f8d;
+      font-size: 0.8rem;
     }
-
-    .message-time {
-      color: var(--text-secondary);
-      font-size: 12px;
-      margin-left: 8px;
-    }
-
-    .message-text {
-      line-height: 1.5;
-      word-wrap: break-word;
-    }
-
     .message-input {
-      padding: 16px 24px;
-      background-color: var(--darker-bg);
-      border-top: 1px solid rgba(124, 58, 237, 0.2);
+      grid-row: 3;
+      padding: 16px;
+      background-color: var(--deep-purple);
+      display: flex;
+      gap: 8px;
     }
-
     .message-input input {
-      width: 100%;
-      padding: 12px 16px;
-      background-color: rgba(168, 85, 247, 0.1);
-      border: 1px solid rgba(124, 58, 237, 0.3);
-      border-radius: 8px;
-      color: var(--text-primary);
-      font-size: 14px;
-      outline: none;
-      transition: all 0.2s ease;
+      flex: 1;
+      padding: 12px;
+      border-radius: 4px;
+      border: none;
+      background-color: #2d1b69;
+      color: var(--light-text);
     }
-
-    .message-input input:focus {
-      border-color: var(--violet-neon);
-      box-shadow: var(--glow);
+    /* Right sidebar */
+    .right-sidebar {
+      grid-column: 4;
+      background-color: #1e1a3a;
+      padding: 16px;
+      overflow-y: auto;
     }
-
-    .message-input input::placeholder {
-      color: var(--text-secondary);
-    }
-
-    /* Colonne Membres */
-    .members-column {
-      background-color: var(--darker-bg);
-      border-left: 1px solid rgba(124, 58, 237, 0.2);
+    .member-list {
       display: flex;
       flex-direction: column;
-      padding: 16px 0;
+      gap: 8px;
     }
-
-    .members-header {
-      padding: 0 16px 16px;
-      border-bottom: 1px solid rgba(124, 58, 237, 0.2);
-      margin-bottom: 8px;
-    }
-
-    .members-header h2 {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .members-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: 0 8px;
-    }
-
     .member-item {
-      height: 40px;
-      border-radius: 4px;
       display: flex;
       align-items: center;
-      padding: 0 12px;
-      margin-bottom: 4px;
+      gap: 8px;
+      padding: 8px;
+      border-radius: 4px;
       cursor: pointer;
-      transition: all 0.2s ease;
     }
-
     .member-item:hover {
-      background-color: rgba(168, 85, 247, 0.2);
+      background-color: rgba(157, 0, 255, 0.2);
     }
-
+    .member-status {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: var(--offline);
+    }
     .member-avatar {
       width: 32px;
       height: 32px;
       border-radius: 50%;
-      margin-right: 12px;
-      position: relative;
+      background-color: var(--neon-blue);
     }
-
-    .member-avatar.online::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      right: 0;
-      width: 10px;
-      height: 10px;
-      background-color: #10b981;
+    /* User panel */
+    .user-panel {
+      grid-column: 1 / span 3;
+      grid-row: 3;
+      background-color: var(--deep-purple);
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-top: 1px solid rgba(0, 0, 0, 0.2);
+    }
+    .user-avatar {
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
-      border: 2px solid var(--darker-bg);
+      background-color: var(--neon-purple);
     }
-
-    .member-avatar.offline::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      right: 0;
-      width: 10px;
-      height: 10px;
-      background-color: #6b7280;
-      border-radius: 50%;
-      border: 2px solid var(--darker-bg);
-    }
-
-    .member-name {
-      font-size: 14px;
-      font-weight: 500;
+    .user-info {
       flex: 1;
     }
-
-    .member-pronouns {
-      background-color: rgba(168, 85, 247, 0.3);
-      color: var(--violet-neon);
-      padding: 2px 6px;
+    .user-username {
+      font-weight: bold;
+    }
+    .user-status-input {
+      background-color: #2d1b69;
+      color: var(--light-text);
+      border: none;
       border-radius: 4px;
-      font-size: 12px;
-      font-weight: 500;
+      padding: 4px 8px;
+      font-size: 0.8rem;
+      width: 100%;
+    }
+    /* Private messages modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background-color: var(--deep-purple);
+      width: 400px;
+      max-height: 80vh;
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-header {
+      padding: 16px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-messages {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .modal-input {
+      padding: 16px;
+      display: flex;
+      gap: 8px;
+    }
+    .modal-input input {
+      flex: 1;
+      padding: 12px;
+      border-radius: 4px;
+      border: none;
+      background-color: #2d1b69;
+      color: var(--light-text);
+    }
+    .status-badge {
+      display: inline-block;
       margin-left: 8px;
-    }
-
-    /* Scrollbars */
-    ::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: rgba(124, 58, 237, 0.1);
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: rgba(168, 85, 247, 0.4);
+      padding: 2px 6px;
+      background-color: rgba(157, 0, 255, 0.3);
       border-radius: 4px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: var(--violet-neon);
+      font-size: 0.7rem;
     }
   </style>
 </head>
 <body>
-  <!-- Colonne MPs -->
-  <div class="mp-column">
-    <div class="mp-icon active">
-      <i class="fas fa-home"></i>
-    </div>
-    <div class="mp-icon unread">
-      <i class="fas fa-envelope"></i>
-    </div>
-    <div class="mp-icon">
-      <i class="fas fa-user-friends"></i>
-    </div>
-    <div style="flex: 1"></div>
-    <div class="mp-icon">
-      <i class="fas fa-cog"></i>
-    </div>
-  </div>
-
-  <!-- Colonne Hubs -->
-  <div class="hubs-column">
-    <div class="hubs-header">
-      <h2>Hubs</h2>
-    </div>
-    <div class="hubs-list">
-      <div class="hub-item active">
-        <div class="hub-icon">N</div>
-        <div class="hub-name">Nexus Officiel</div>
-      </div>
-      <div class="hub-item">
-        <div class="hub-icon">L</div>
-        <div class="hub-name">LGBTQIA+ Safe Space</div>
-      </div>
-      <div class="hub-item">
-        <div class="hub-icon">D</div>
-        <div class="hub-name">Devs Inclusifs</div>
-      </div>
-    </div>
-    <div class="add-hub">
+  <!-- Sidebar gauche -->
+  <div class="sidebar">
+    <div class="server-icon">
       <i class="fas fa-plus"></i>
     </div>
-  </div>
-
-  <!-- Colonne Espaces -->
-  <div class="espaces-column">
-    <div class="espaces-header">
-      <h1># espace-général</h1>
-      <span class="channel-type">Espace texte</span>
-    </div>
-    <div class="espaces-list">
-      <div class="espace-category">
-        <div class="espace-category-header">
-          <i class="fas fa-chevron-down" style="margin-right: 8px;"></i>
-          Espaces texte
-        </div>
-        <div class="espace-item active">
-          <i class="fas fa-hashtag espace-icon"></i>
-          <span class="espace-name">espace-général</span>
-          <div class="espace-unread"></div>
-        </div>
-        <div class="espace-item">
-          <i class="fas fa-hashtag espace-icon"></i>
-          <span class="espace-name">espace-aide</span>
-        </div>
-        <div class="espace-item">
-          <i class="fas fa-hashtag espace-icon"></i>
-          <span class="espace-name">espace-médias</span>
-        </div>
-      </div>
-      <div class="espace-category">
-        <div class="espace-category-header">
-          <i class="fas fa-chevron-down" style="margin-right: 8px;"></i>
-          Espaces vocaux
-        </div>
-        <div class="espace-item">
-          <i class="fas fa-volume-up espace-icon"></i>
-          <span class="espace-name">Général</span>
-        </div>
-      </div>
-    </div>
-    <div class="chat-zone">
-      <div class="messages-container" id="messages-container">
-        <div class="message">
-          <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Alex" alt="Avatar" class="message-avatar">
-          <div class="message-content">
-            <div class="message-header">
-              <span class="message-username">Alex</span>
-              <span class="message-pronouns">iel</span>
-              <span class="message-time">Aujourd'hui à 14:32</span>
-            </div>
-            <div class="message-text">Bienvenue dans Nexus ! Ici c'est un espace safe pour toutes les identités de genre et orientations. N'hésitez pas à vous présenter dans #espace-présentations 😊</div>
-          </div>
-        </div>
-        <div class="message">
-          <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Sam" alt="Avatar" class="message-avatar">
-          <div class="message-content">
-            <div class="message-header">
-              <span class="message-username">Sam</span>
-              <span class="message-pronouns">il</span>
-              <span class="message-time">Aujourd'hui à 14:35</span>
-            </div>
-            <div class="message-text">Salut tout le monde ! Je suis nouveau ici, je viens de la communauté tech. Quelqu'un connaît des ressources pour apprendre le Rust de manière inclusive ?</div>
-          </div>
-        </div>
-      </div>
-      <div class="message-input">
-        <input type="text" placeholder="Envoyer un message dans #espace-général" id="message-input">
-      </div>
+    <div class="server-icon">
+      <i class="fas fa-home"></i>
     </div>
   </div>
 
-  <!-- Colonne Membres -->
-  <div class="members-column">
-    <div class="members-header">
-      <h2>Membres — 42</h2>
+  <!-- Server list -->
+  <div class="server-list">
+    <div class="server-item">
+      <div class="server-icon" style="width: 32px; height: 32px; border-radius: 8px;">N</div>
+      <span>Nexus Officiel</span>
     </div>
-    <div class="members-list">
-      <div class="member-item">
-        <div class="member-avatar online">
-          <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Alex" alt="Avatar">
-        </div>
-        <span class="member-name">Alex</span>
-        <span class="member-pronouns">iel</span>
+  </div>
+
+  <!-- Main content -->
+  <div class="main-content">
+    <div class="channel-header">
+      <i class="fas fa-hashtag"></i>
+      <span>général</span>
+    </div>
+    <div class="messages" id="messages">
+      <!-- Messages will be inserted here -->
+    </div>
+    <div class="message-input">
+      <input type="text" placeholder="Envoyer un message..." id="messageInput">
+      <button id="sendMessage"><i class="fas fa-paper-plane"></i></button>
+    </div>
+  </div>
+
+  <!-- Right sidebar -->
+  <div class="right-sidebar">
+    <h3>Membres en ligne</h3>
+    <div class="member-list" id="memberList">
+      <!-- Members will be inserted here -->
+    </div>
+  </div>
+
+  <!-- User panel -->
+  <div class="user-panel">
+    <img src="" alt="Avatar" class="user-avatar" id="userAvatar">
+    <div class="user-info">
+      <div class="user-username" id="userUsername"></div>
+      <input type="text" class="user-status-input" placeholder="Définir un statut..." id="userStatusInput">
+    </div>
+    <i class="fas fa-cog"></i>
+  </div>
+
+  <!-- Private messages modal -->
+  <div class="modal" id="privateMsgModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span id="privateMsgUsername"></span>
+        <button id="closePrivateMsg"><i class="fas fa-times"></i></button>
       </div>
-      <div class="member-item">
-        <div class="member-avatar online">
-          <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Sam" alt="Avatar">
-        </div>
-        <span class="member-name">Sam</span>
-        <span class="member-pronouns">il</span>
+      <div class="modal-messages" id="privateMessages">
+        <!-- Private messages will be inserted here -->
       </div>
-      <div class="member-item">
-        <div class="member-avatar offline">
-          <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Taylor" alt="Avatar">
-        </div>
-        <span class="member-name">Taylor</span>
-        <span class="member-pronouns">iel</span>
-      </div>
-      <div class="member-item">
-        <div class="member-avatar online">
-          <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Jordan" alt="Avatar">
-        </div>
-        <span class="member-name">Jordan</span>
-        <span class="member-pronouns">iel</span>
+      <div class="modal-input">
+        <input type="text" placeholder="Envoyer un message privé..." id="privateMessageInput">
+        <button id="sendPrivateMessage"><i class="fas fa-paper-plane"></i></button>
       </div>
     </div>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
-    const socket = io();
-    const messageInput = document.getElementById('message-input');
-    const messagesContainer = document.getElementById('messages-container');
+    // Auth
+    const token = localStorage.getItem('nexus_token');
+    const userId = localStorage.getItem('nexus_userId');
+    if (!token || !userId) {
+      window.location.href = '/login.html';
+    }
 
-    // Connexion Socket.io existante
-    socket.on('connect', () => {
-      console.log('Connecté au serveur NEXUS');
+    const socket = io({
+      auth: { token }
     });
 
-    // Réception des messages
-    socket.on('message', (message) => {
-      const messageElement = document.createElement('div');
-      messageElement.className = 'message';
-      messageElement.innerHTML = `
-        <img src="${message.avatar}" alt="Avatar" class="message-avatar">
-        <div class="message-content">
-          <div class="message-header">
-            <span class="message-username">${message.username}</span>
-            <span class="message-pronouns">${message.pronouns}</span>
-            <span class="message-time">${new Date(message.created_at).toLocaleTimeString()}</span>
-          </div>
-          <div class="message-text">${marked.parse(message.content)}</div>
-        </div>
-      `;
-      messagesContainer.appendChild(messageElement);
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    // DOM elements
+    const messagesEl = document.getElementById('messages');
+    const messageInput = document.getElementById('messageInput');
+    const sendMessageBtn = document.getElementById('sendMessage');
+    const memberListEl = document.getElementById('memberList');
+    const userAvatar = document.getElementById('userAvatar');
+    const userUsername = document.getElementById('userUsername');
+    const userStatusInput = document.getElementById('userStatusInput');
+    const privateMsgModal = document.getElementById('privateMsgModal');
+    const privateMsgUsername = document.getElementById('privateMsgUsername');
+    const privateMessagesEl = document.getElementById('privateMessages');
+    const privateMessageInput = document.getElementById('privateMessageInput');
+    const sendPrivateMessageBtn = document.getElementById('sendPrivateMessage');
+    const closePrivateMsgBtn = document.getElementById('closePrivateMsg');
+
+    let currentPrivateChat = null;
+
+    // Fetch user data
+    fetch('/api/user', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    .then(res => res.json())
+    .then(user => {
+      userAvatar.src = user.avatar;
+      userUsername.textContent = user.username;
+      if (user.customStatus) {
+        userStatusInput.value = user.customStatus;
+      }
     });
 
-    // Envoi de message
-    messageInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter' && messageInput.value.trim()) {
-        socket.emit('message', {
-          content: messageInput.value.trim()
-        });
+    // Messages
+    sendMessageBtn.addEventListener('click', () => {
+      const content = messageInput.value.trim();
+      if (content) {
+        socket.emit('message', { content });
         messageInput.value = '';
       }
+    });
+
+    messageInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        sendMessageBtn.click();
+      }
+    });
+
+    socket.on('message', (message) => {
+      const messageEl = document.createElement('div');
+      messageEl.className = 'message';
+      messageEl.innerHTML = `
+        <img src="${message.avatar}" alt="Avatar" class="message-avatar">
+        <div class="message-content">
+          <div>
+            <span class="message-username">${message.username}</span>
+            <span class="message-timestamp">${new Date(message.created_at).toLocaleTimeString()}</span>
+          </div>
+          <div>${message.content}</div>
+        </div>
+      `;
+      messagesEl.appendChild(messageEl);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    });
+
+    // Members list
+    socket.on('user-status', (users) => {
+      memberListEl.innerHTML = '';
+      users.forEach(user => {
+        const memberEl = document.createElement('div');
+        memberEl.className = 'member-item';
+        memberEl.innerHTML = `
+          <div class="member-status" style="background-color: ${user.status === 'online' ? 'var(--online)' : 'var(--offline)'}"></div>
+          <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(user.username)}" alt="Avatar" class="member-avatar">
+          <span>${user.username}</span>
+          ${user.customStatus ? `<span class="status-badge">${user.customStatus}</span>` : ''}
+        `;
+        memberEl.addEventListener('click', () => openPrivateChat(user));
+        memberListEl.appendChild(memberEl);
+      });
+    });
+
+    // User status
+    userStatusInput.addEventListener('change', () => {
+      const status = userStatusInput.value.trim();
+      socket.emit('update-status', { customStatus: status });
+    });
+
+    // Private messages
+    function openPrivateChat(user) {
+      currentPrivateChat = user.userId;
+      privateMsgUsername.textContent = user.username;
+      privateMessagesEl.innerHTML = '';
+      privateMsgModal.style.display = 'flex';
+
+      // Fetch previous messages
+      fetch(`/api/private-messages/${user.userId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      .then(res => res.json())
+      .then(messages => {
+        messages.forEach(msg => {
+          displayPrivateMessage(msg);
+        });
+      });
+    }
+
+    function displayPrivateMessage(message) {
+      const isMe = message.from === parseInt(userId);
+      const messageEl = document.createElement('div');
+      messageEl.className = 'message';
+      messageEl.style.justifyContent = isMe ? 'flex-end' : 'flex-start';
+      messageEl.innerHTML = `
+        <div class="message-content" style="background-color: ${isMe ? 'var(--neon-purple)' : '#2d1b69'}; border-radius: 8px; padding: 8px 12px; max-width: 80%;">
+          <div>${message.content}</div>
+          <div class="message-timestamp" style="text-align: ${isMe ? 'right' : 'left'}">${new Date(message.created_at).toLocaleTimeString()}</div>
+        </div>
+      `;
+      privateMessagesEl.appendChild(messageEl);
+      privateMessagesEl.scrollTop = privateMessagesEl.scrollHeight;
+    }
+
+    sendPrivateMessageBtn.addEventListener('click', () => {
+      const content = privateMessageInput.value.trim();
+      if (content && currentPrivateChat) {
+        socket.emit('private-msg', { to: currentPrivateChat, content });
+        privateMessageInput.value = '';
+      }
+    });
+
+    privateMessageInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        sendPrivateMessageBtn.click();
+      }
+    });
+
+    socket.on('private-msg', (message) => {
+      if (message.from === currentPrivateChat || message.to === currentPrivateChat) {
+        displayPrivateMessage(message);
+      }
+    });
+
+    closePrivateMsgBtn.addEventListener('click', () => {
+      privateMsgModal.style.display = 'none';
+      currentPrivateChat = null;
     });
   </script>
 </body>
