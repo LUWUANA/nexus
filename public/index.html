@@ -3,377 +3,506 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NEXUS — Hubs Inclusifs</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <title>NEXUS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="/socket.io/socket.io.js"></script>
   <style>
     :root {
-      --deep-purple: #7c3aed;
-      --violet-neon: #a855f7;
-      --pink-neon: #e879f9;
-      --dark-bg: #0d0d1a;
-      --darker-bg: #12122a;
-      --text-primary: #e0e0e0;
-      --text-secondary: #a0a0a0;
-      --input-bg: #1e1e2e;
-      --input-text: #dbdee1;
-      --input-placeholder: #6c7284;
-      --glow: 0 0 8px var(--violet-neon);
-      --glow-active: 0 0 12px var(--pink-neon);
+      --violet:   #6e57ff;
+      --violet-2: #5a46e8;
+      --neon:     #a78bfa;
+      --bg:       #1e1f22;
+      --bg-side:  #2b2d31;
+      --bg-chat:  #313338;
+      --bg-input: #383a40;
+      --bg-dark:  #111214;
+      --text:     #dbdee1;
+      --muted:    #949ba4;
+      --green:    #23a55a;
+      --red:      #f23f43;
+      --radius:   8px;
     }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    body {
-      background: linear-gradient(-45deg, #0d0d1a, #1a0a2e, #0d1a2e, #1a0a2e);
-      background-size: 400% 400%;
-      animation: gradientBG 15s ease infinite;
-      color: var(--text-primary);
-      overflow: hidden;
-      height: 100vh;
-    }
-
-    @keyframes gradientBG {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
-    .particles {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 1;
-      pointer-events: none;
-    }
-
-    .particle {
-      position: absolute;
-      background: rgba(168, 85, 247, 0.5);
-      border-radius: 50%;
-      opacity: 0;
-      animation: float 15s infinite ease-in;
-    }
-
-    @keyframes float {
-      0% { transform: translateY(100vh) scale(0); opacity: 0; }
-      10% { opacity: 0.8; }
-      90% { opacity: 0.8; }
-      100% { transform: translateY(-100px) scale(1); opacity: 0; }
-    }
-
+    /* ── Auth Overlay ─────────────────────────────────────────────── */
     #auth-overlay {
-      position: fixed;
-      inset: 0;
-      background: #0d0d1a;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
+      position: fixed; inset: 0; z-index: 1000;
+      background: radial-gradient(ellipse at center, #1a0a2e 0%, #0d0d1a 60%, #0a0a14 100%);
+      display: flex; align-items: center; justify-content: center;
     }
+    #auth-overlay.hidden { display: none; }
 
-    .nexus-logo {
-      font-size: 4rem;
-      font-weight: 700;
-      margin-bottom: 1rem;
-      text-shadow: var(--glow-active);
-      background: linear-gradient(90deg, var(--violet-neon), var(--pink-neon));
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      animation: pulse 2s infinite alternate;
+    .auth-card {
+      background: rgba(30, 20, 60, 0.85);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(167, 139, 250, 0.3);
+      border-radius: 20px;
+      padding: 48px 40px;
+      width: 460px;
+      box-shadow: 0 0 60px rgba(110, 87, 255, 0.2), 0 24px 64px rgba(0,0,0,.6);
     }
+    .auth-logo {
+      text-align: center; margin-bottom: 8px;
+      font-size: 2.4rem; font-weight: 700;
+      color: var(--neon);
+      text-shadow: 0 0 20px rgba(167,139,250,.8), 0 0 40px rgba(110,87,255,.5);
+      letter-spacing: .05em;
+    }
+    .auth-sub { text-align: center; color: var(--muted); font-size: .9rem; margin-bottom: 32px; line-height: 1.5; }
 
-    @keyframes pulse {
-      from { text-shadow: var(--glow-active); }
-      to { text-shadow: 0 0 20px var(--pink-neon); }
-    }
+    .auth-tabs { display: flex; margin-bottom: 28px; border-radius: var(--radius); overflow: hidden; gap: 4px; }
+    .auth-tab  { flex: 1; padding: 10px; text-align: center; cursor: pointer; background: rgba(255,255,255,.05); color: var(--muted); font-size: .9rem; font-weight: 500; border-radius: var(--radius); transition: .2s; }
+    .auth-tab.active { background: var(--violet); color: #fff; }
 
-    .auth-tabs {
-      display: flex;
-      margin-bottom: 2rem;
-      background: rgba(30, 30, 46, 0.6);
-      border-radius: 8px;
-      padding: 4px;
+    .auth-field { margin-bottom: 16px; }
+    .auth-field label { display: block; font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 6px; }
+    .auth-field input {
+      width: 100%; padding: 12px 14px;
+      background: #1e1e2e; border: 1.5px solid rgba(110,87,255,.3);
+      border-radius: var(--radius); color: var(--text);
+      font-family: inherit; font-size: .95rem; outline: none; transition: border-color .2s;
     }
+    .auth-field input:focus { border-color: var(--violet); }
+    .auth-field input::placeholder { color: var(--muted); }
 
-    .auth-tab {
-      padding: 10px 20px;
-      cursor: pointer;
-      border-radius: 6px;
-      color: var(--text-secondary);
-      transition: all 0.3s;
+    .pronoun-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .pronoun-badge {
+      padding: 6px 14px; border-radius: 20px; cursor: pointer; font-size: .82rem;
+      background: rgba(110,87,255,.1); border: 1.5px solid rgba(110,87,255,.3);
+      color: var(--muted); transition: .2s;
     }
+    .pronoun-badge.selected { background: var(--violet); border-color: var(--violet); color: #fff; }
 
-    .auth-tab.active {
-      background: var(--violet-neon);
-      color: white;
+    .auth-btn {
+      width: 100%; padding: 13px; margin-top: 8px;
+      background: var(--violet); color: #fff;
+      border: none; border-radius: var(--radius);
+      font-family: inherit; font-size: 1rem; font-weight: 700;
+      cursor: pointer; transition: .2s;
+      box-shadow: 0 0 20px rgba(110,87,255,.4);
     }
+    .auth-btn:hover { background: var(--violet-2); box-shadow: 0 0 30px rgba(110,87,255,.6); }
+    .auth-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .auth-error { color: var(--red); font-size: .85rem; text-align: center; margin-top: 12px; min-height: 20px; }
 
-    .auth-container {
-      background: rgba(30, 30, 46, 0.8);
-      padding: 2rem;
-      border-radius: 12px;
-      width: 100%;
-      max-width: 400px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
+    /* ── App Layout ───────────────────────────────────────────────── */
+    #app { display: none; grid-template-columns: 72px 240px 1fr; height: 100vh; }
+    #app.visible { display: grid; }
 
-    .auth-form {
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
+    /* Hubs */
+    .hubs {
+      background: var(--bg-dark);
+      display: flex; flex-direction: column; align-items: center;
+      padding: 12px 0; gap: 8px; overflow-y: auto;
     }
+    .hub-item { position: relative; display: flex; align-items: center; }
+    .hub-pill { width: 4px; height: 0; background: var(--text); border-radius: 0 4px 4px 0; position: absolute; left: 0; transition: height .2s; }
+    .hub-item.active .hub-pill { height: 40px; }
+    .hub-icon {
+      width: 48px; height: 48px; background: var(--bg-side); border-radius: 50%;
+      cursor: pointer; transition: border-radius .2s, background .2s;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 1.1rem; user-select: none;
+    }
+    .hub-icon:hover, .hub-item.active .hub-icon { border-radius: 30%; background: var(--violet); }
+    .hub-sep { width: 32px; height: 2px; background: var(--bg-side); border-radius: 1px; }
 
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
+    /* Sidebar */
+    .sidebar { background: var(--bg-side); display: flex; flex-direction: column; }
+    .sidebar-header { padding: 16px; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,.06); }
+    .channels-list { flex: 1; padding: 8px; overflow-y: auto; }
+    .ch-category { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); padding: 16px 8px 4px; }
+    .ch-item { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 6px; cursor: pointer; color: var(--muted); font-size: .95rem; transition: .15s; }
+    .ch-item:hover { background: rgba(255,255,255,.06); color: var(--text); }
+    .ch-item.active { background: rgba(255,255,255,.1); color: var(--text); }
 
-    .form-group label {
-      font-size: 0.9rem;
-      color: var(--text-secondary);
-    }
+    .user-panel { background: var(--bg-dark); padding: 10px 12px; display: flex; align-items: center; gap: 10px; }
+    .user-panel .ava { width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--green); cursor: pointer; }
+    .user-panel .info { flex: 1; min-width: 0; }
+    .user-panel .info b { display: block; font-size: .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-panel .info small { font-size: .75rem; color: var(--muted); }
+    .btn-icon { background: none; border: none; color: var(--muted); cursor: pointer; padding: 4px; border-radius: 4px; font-size: 1rem; transition: color .2s; }
+    .btn-icon:hover { color: var(--text); }
 
-    .form-group input {
-      padding: 12px;
-      background: var(--input-bg);
-      border: 1px solid rgba(124, 58, 237, 0.3);
-      border-radius: 6px;
-      color: var(--input-text);
-      font-size: 1rem;
-      transition: border-color 0.3s;
-    }
+    /* Chat */
+    .chat { display: flex; flex-direction: column; background: var(--bg-chat); }
+    .chat-header { padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,.06); display: flex; align-items: center; gap: 10px; font-weight: 600; }
+    #chat-area { flex: 1; padding: 16px 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+    .msg-group { display: flex; gap: 16px; margin-top: 16px; }
+    .msg-group .ava { width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; }
+    .msg-group .meta { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+    .msg-group .meta b { color: var(--violet); font-size: .95rem; }
+    .msg-group .meta .pronouns { font-size: .72rem; color: var(--muted); background: rgba(110,87,255,.15); padding: 1px 6px; border-radius: 10px; }
+    .msg-group .meta time { font-size: .75rem; color: var(--muted); }
+    .msg-group p { line-height: 1.4; word-break: break-word; }
+    .msg-continued { padding: 1px 0 1px 56px; }
 
-    .form-group input:focus {
-      outline: none;
-      border-color: var(--violet-neon);
-      box-shadow: var(--glow);
-    }
+    .input-bar { padding: 0 20px 24px; }
+    .input-wrap { display: flex; align-items: center; background: var(--bg-input); border-radius: var(--radius); padding: 0 16px; }
+    .input-wrap input { flex: 1; background: none; border: none; padding: 14px 0; color: var(--text); font-family: inherit; font-size: .95rem; outline: none; }
+    .input-wrap input::placeholder { color: var(--muted); }
 
-    .form-group input::placeholder {
-      color: var(--input-placeholder);
-    }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 3px; }
 
-    .auth-button {
-      padding: 12px;
-      background: var(--violet-neon);
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    .auth-button:hover {
-      background: var(--pink-neon);
-      box-shadow: var(--glow-active);
-    }
-
-    .auth-footer {
-      margin-top: 1rem;
-      font-size: 0.8rem;
-      color: var(--text-secondary);
-      text-align: center;
-    }
-
-    .auth-footer a {
-      color: var(--violet-neon);
-      text-decoration: none;
-    }
-
-    .auth-footer a:hover {
-      text-decoration: underline;
-    }
+    #toast { position: fixed; bottom: 24px; right: 24px; background: var(--bg-side); color: var(--text); padding: 12px 20px; border-radius: var(--radius); border-left: 3px solid var(--violet); font-size: .9rem; opacity: 0; transition: opacity .3s; z-index: 999; pointer-events: none; }
+    #toast.show { opacity: 1; }
   </style>
 </head>
 <body>
-  <div class="particles" id="particles-js"></div>
 
-  <div id="auth-overlay">
-    <h1 class="nexus-logo">NEXUS</h1>
+<!-- Auth Overlay -->
+<div id="auth-overlay">
+  <div class="auth-card">
+    <div class="auth-logo">✦ NEXUS</div>
+    <div class="auth-sub">Le hub inclusif où chaque voix compte.<br>Rejoins une communauté qui célèbre la diversité.</div>
+
     <div class="auth-tabs">
-      <div class="auth-tab active" data-tab="login">Connexion</div>
-      <div class="auth-tab" data-tab="register">Inscription</div>
+      <div class="auth-tab active" id="tab-login-btn">Connexion</div>
+      <div class="auth-tab" id="tab-register-btn">Inscription</div>
     </div>
-    <div class="auth-container">
-      <form class="auth-form" id="login-form">
-        <div class="form-group">
-          <label for="login-username">Pseudo</label>
-          <input type="text" id="login-username" placeholder="Entrez votre pseudo" required>
+
+    <!-- Login -->
+    <div id="tab-login">
+      <div class="auth-field">
+        <label>Pseudo</label>
+        <input type="text" id="login-user" placeholder="ton_pseudo" autocomplete="username">
+      </div>
+      <div class="auth-field">
+        <label>Mot de passe</label>
+        <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="auth-btn" id="login-btn">Se connecter</button>
+    </div>
+
+    <!-- Register -->
+    <div id="tab-register" style="display:none">
+      <div class="auth-field">
+        <label>Pseudo</label>
+        <input type="text" id="reg-user" placeholder="ton_pseudo">
+      </div>
+      <div class="auth-field">
+        <label>Mot de passe</label>
+        <input type="password" id="reg-pass" placeholder="••••••••">
+      </div>
+      <div class="auth-field">
+        <label>Pronoms <span style="color:var(--violet)">*</span></label>
+        <div class="pronoun-badges" id="pronoun-badges">
+          <div class="pronoun-badge selected" data-value="iel">iel</div>
+          <div class="pronoun-badge" data-value="il">il</div>
+          <div class="pronoun-badge" data-value="elle">elle</div>
+          <div class="pronoun-badge" data-value="iel/il">iel/il</div>
+          <div class="pronoun-badge" data-value="iel/elle">iel/elle</div>
+          <div class="pronoun-badge" data-value="Autre">Autre</div>
         </div>
-        <div class="form-group">
-          <label for="login-password">Mot de passe</label>
-          <input type="password" id="login-password" placeholder="Entrez votre mot de passe" required>
-        </div>
-        <button type="submit" class="auth-button">Se connecter</button>
-      </form>
-      <form class="auth-form" id="register-form" style="display: none;">
-        <div class="form-group">
-          <label for="register-username">Pseudo</label>
-          <input type="text" id="register-username" placeholder="Choisissez un pseudo" required>
-        </div>
-        <div class="form-group">
-          <label for="register-password">Mot de passe</label>
-          <input type="password" id="register-password" placeholder="Créez un mot de passe" required>
-        </div>
-        <div class="form-group">
-          <label for="register-pronouns">Pronoms (optionnel)</label>
-          <input type="text" id="register-pronouns" placeholder="iel / iels / il / elle / ...">
-        </div>
-        <button type="submit" class="auth-button">S'inscrire</button>
-      </form>
-      <div class="auth-footer">
-        En vous inscrivant, vous acceptez nos <a href="#">Conditions d'utilisation</a>.
+      </div>
+      <button class="auth-btn" id="register-btn">Créer mon compte</button>
+    </div>
+
+    <div class="auth-error" id="auth-error"></div>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app">
+  <div class="hubs" id="hubs-list">
+    <div class="hub-item active" id="hub-nexus-core">
+      <div class="hub-pill"></div>
+      <div class="hub-icon" title="Nexus Core">N</div>
+    </div>
+    <div class="hub-sep"></div>
+    <div class="hub-item">
+      <div class="hub-icon" title="Créer un Hub" onclick="toast('Bientôt disponible !')">+</div>
+    </div>
+  </div>
+
+  <div class="sidebar">
+    <div class="sidebar-header" id="sidebar-title">Nexus Core</div>
+    <div class="channels-list" id="channels-list"></div>
+    <div class="user-panel">
+      <img id="my-avatar" class="ava" src="" alt="">
+      <div class="info">
+        <b id="my-name">...</b>
+        <small id="my-pronouns"></small>
+      </div>
+      <button class="btn-icon" onclick="doLogout()" title="Se déconnecter">⏏</button>
+    </div>
+  </div>
+
+  <div class="chat">
+    <div class="chat-header">
+      <span>#</span>
+      <span id="active-channel-name">général</span>
+    </div>
+    <div id="chat-area"></div>
+    <div class="input-bar">
+      <div class="input-wrap">
+        <input type="text" id="chat-input" placeholder="Envoyer un message..." onkeydown="handleKey(event)">
       </div>
     </div>
   </div>
+</div>
 
-  <div id="app" style="display: none;">
-    <div class="sidebar">
-      <div class="server-list"></div>
-      <div class="user-profile"></div>
-    </div>
-    <div class="main-content">
-      <div class="channel-header"></div>
-      <div class="message-list"></div>
-      <div class="message-input"></div>
-    </div>
-  </div>
+<div id="toast"></div>
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const socket = io();
-      const authOverlay = document.getElementById('auth-overlay');
-      const app = document.getElementById('app');
-      const loginForm = document.getElementById('login-form');
-      const registerForm = document.getElementById('register-form');
-      const authTabs = document.querySelectorAll('.auth-tab');
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const socket = io();
+  let currentUser    = null;
+  let currentChannel = null;
+  let lastMsgUser    = null;
+  let selectedPronoun = 'iel';
 
-      // Gestion des onglets auth
-      authTabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-          authTabs.forEach(t => t.classList.remove('active'));
-          tab.classList.add('active');
-          document.getElementById('login-form').style.display = tab.dataset.tab === 'login' ? 'block' : 'none';
-          document.getElementById('register-form').style.display = tab.dataset.tab === 'register' ? 'block' : 'none';
-        });
-      });
-
-      // Vérification du token au chargement
-      const token = localStorage.getItem('nexus_token');
-      if (token) {
-        authOverlay.style.display = 'none';
-        app.style.display = 'grid';
-        socket.emit('auth', { token });
-        loadServers();
-      }
-
-      // Login
-      loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const username = document.getElementById('login-username').value;
-        const password = document.getElementById('login-password').value;
-
-        try {
-          const response = await fetch('/api/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
-          });
-          const data = await response.json();
-
-          if (data.error) {
-            alert(data.error);
-            return;
-          }
-
-          localStorage.setItem('nexus_token', data.token);
-          authOverlay.style.display = 'none';
-          app.style.display = 'grid';
-          socket.emit('auth', { token: data.token });
-          loadServers();
-        } catch (err) {
-          console.error('Erreur de connexion:', err);
-          alert('Erreur de connexion');
-        }
-      });
-
-      // Register
-      registerForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const username = document.getElementById('register-username').value;
-        const password = document.getElementById('register-password').value;
-        const pronouns = document.getElementById('register-pronouns').value;
-
-        try {
-          const response = await fetch('/api/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password, pronouns })
-          });
-          const data = await response.json();
-
-          if (data.error) {
-            alert(data.error);
-            return;
-          }
-
-          localStorage.setItem('nexus_token', data.token);
-          authOverlay.style.display = 'none';
-          app.style.display = 'grid';
-          socket.emit('auth', { token: data.token });
-          loadServers();
-        } catch (err) {
-          console.error('Erreur d\'inscription:', err);
-          alert('Erreur d\'inscription');
-        }
-      });
-
-      // Charger les serveurs et rejoindre le premier salon texte
-      async function loadServers() {
-        try {
-          const response = await fetch('/api/servers', {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('nexus_token')}`
-            }
-          });
-          const servers = await response.json();
-
-          if (servers.length > 0) {
-            const firstServer = servers[0];
-            const channelsResponse = await fetch(`/api/servers/${firstServer.id}/channels`, {
-              headers: {
-                'Authorization': `Bearer ${localStorage.getItem('nexus_token')}`
-              }
-            });
-            const channels = await channelsResponse.json();
-            const firstTextChannel = channels.find(channel => channel.type === 'text');
-
-            if (firstTextChannel) {
-              socket.emit('join_channel', { channelId: firstTextChannel.id });
-            }
-          }
-        } catch (err) {
-          console.error('Erreur lors du chargement des serveurs:', err);
-        }
-      }
+  // ── Pronoun badges ──────────────────────────────────────────────
+  document.querySelectorAll('.pronoun-badge').forEach(function(badge) {
+    badge.addEventListener('click', function() {
+      document.querySelectorAll('.pronoun-badge').forEach(function(b) { b.classList.remove('selected'); });
+      badge.classList.add('selected');
+      selectedPronoun = badge.dataset.value;
     });
-  </script>
+  });
+
+  // ── Auth tabs ───────────────────────────────────────────────────
+  document.getElementById('tab-login-btn').addEventListener('click', function() {
+    document.getElementById('tab-login-btn').classList.add('active');
+    document.getElementById('tab-register-btn').classList.remove('active');
+    document.getElementById('tab-login').style.display = '';
+    document.getElementById('tab-register').style.display = 'none';
+    document.getElementById('auth-error').textContent = '';
+  });
+
+  document.getElementById('tab-register-btn').addEventListener('click', function() {
+    document.getElementById('tab-register-btn').classList.add('active');
+    document.getElementById('tab-login-btn').classList.remove('active');
+    document.getElementById('tab-register').style.display = '';
+    document.getElementById('tab-login').style.display = 'none';
+    document.getElementById('auth-error').textContent = '';
+  });
+
+  // ── Login ───────────────────────────────────────────────────────
+  document.getElementById('login-btn').addEventListener('click', async function() {
+    var username = document.getElementById('login-user').value.trim();
+    var password = document.getElementById('login-pass').value;
+    if (!username || !password) { showError('Remplis tous les champs'); return; }
+
+    document.getElementById('login-btn').disabled = true;
+    document.getElementById('login-btn').textContent = 'Connexion...';
+
+    try {
+      var res  = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) });
+      var data = await res.json();
+      if (!res.ok) { showError(data.error || 'Erreur'); return; }
+      localStorage.setItem('nexus_token', data.token);
+      startApp(data.user);
+    } catch(e) {
+      showError('Impossible de joindre le serveur');
+    } finally {
+      document.getElementById('login-btn').disabled = false;
+      document.getElementById('login-btn').textContent = 'Se connecter';
+    }
+  });
+
+  // ── Register ────────────────────────────────────────────────────
+  document.getElementById('register-btn').addEventListener('click', async function() {
+    var username = document.getElementById('reg-user').value.trim();
+    var password = document.getElementById('reg-pass').value;
+    if (!username || !password) { showError('Remplis tous les champs'); return; }
+
+    document.getElementById('register-btn').disabled = true;
+    document.getElementById('register-btn').textContent = 'Création...';
+
+    try {
+      var res  = await fetch('/api/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password, pronouns: selectedPronoun }) });
+      var data = await res.json();
+      if (!res.ok) { showError(data.error || 'Erreur'); return; }
+      localStorage.setItem('nexus_token', data.token);
+      startApp(data.user);
+    } catch(e) {
+      showError('Impossible de joindre le serveur');
+    } finally {
+      document.getElementById('register-btn').disabled = false;
+      document.getElementById('register-btn').textContent = "Créer mon compte";
+    }
+  });
+
+  function showError(msg) {
+    document.getElementById('auth-error').textContent = msg;
+  }
+
+  // ── Start App ───────────────────────────────────────────────────
+  function startApp(user) {
+    currentUser = user;
+    document.getElementById('auth-overlay').classList.add('hidden');
+    document.getElementById('app').classList.add('visible');
+    document.getElementById('my-name').textContent    = user.username;
+    document.getElementById('my-pronouns').textContent = user.pronouns;
+    document.getElementById('my-avatar').src           = user.avatar;
+    socket.emit('auth', { token: localStorage.getItem('nexus_token') });
+    loadServers();
+  }
+
+  async function loadServers() {
+    try {
+      var res     = await fetch('/api/servers');
+      var servers = await res.json();
+      if (!servers.length) return;
+      var srv = servers[0];
+      renderChannels(srv.channels);
+      var firstText = srv.channels.find(function(c) { return c.type === 'text'; });
+      if (firstText) joinChannel(firstText);
+    } catch(e) {
+      console.error('Erreur chargement serveurs:', e);
+    }
+  }
+
+  function renderChannels(channels) {
+    var list   = document.getElementById('channels-list');
+    var texts  = channels.filter(function(c) { return c.type === 'text'; });
+    var voices = channels.filter(function(c) { return c.type === 'voice'; });
+    list.innerHTML = '';
+    if (texts.length) {
+      var cat = document.createElement('div');
+      cat.className = 'ch-category';
+      cat.textContent = 'Espaces texte';
+      list.appendChild(cat);
+      texts.forEach(function(ch) {
+        var el = document.createElement('div');
+        el.className = 'ch-item';
+        el.id = 'ch-' + ch.id;
+        el.innerHTML = '<span>#</span> ' + ch.name;
+        el.addEventListener('click', function() { joinChannel(ch); });
+        list.appendChild(el);
+      });
+    }
+    if (voices.length) {
+      var cat2 = document.createElement('div');
+      cat2.className = 'ch-category';
+      cat2.textContent = 'Espaces vocaux';
+      list.appendChild(cat2);
+      voices.forEach(function(ch) {
+        var el = document.createElement('div');
+        el.className = 'ch-item';
+        el.innerHTML = '<span>🔊</span> ' + ch.name;
+        el.addEventListener('click', function() { toast('Audio/Vidéo bientôt disponible !'); });
+        list.appendChild(el);
+      });
+    }
+  }
+
+  function joinChannel(ch) {
+    currentChannel = ch; lastMsgUser = null;
+    document.getElementById('active-channel-name').textContent = ch.name;
+    document.querySelectorAll('.ch-item').forEach(function(el) { el.classList.remove('active'); });
+    var el = document.getElementById('ch-' + ch.id);
+    if (el) el.classList.add('active');
+    document.getElementById('chat-area').innerHTML = '';
+    socket.emit('join-channel', { channelId: ch.id });
+  }
+
+  // ── Socket events ───────────────────────────────────────────────
+  socket.on('auth-success', function(u) { console.log('✅ Socket auth', u.username); });
+  socket.on('auth-error',   function(e) { console.error('Socket auth error:', e); });
+
+  socket.on('channel-history', function(data) {
+    document.getElementById('chat-area').innerHTML = '';
+    lastMsgUser = null;
+    data.messages.forEach(renderMsg);
+    scrollToBottom();
+  });
+
+  socket.on('new-msg', function(msg) { renderMsg(msg); scrollToBottom(); });
+
+  socket.on('user-status', function(data) {
+    toast(data.username + ' est ' + (data.status === 'online' ? 'en ligne 🟢' : 'hors ligne'));
+  });
+
+  function renderMsg(msg) {
+    var area = document.getElementById('chat-area');
+    if (msg.username === lastMsgUser) {
+      var div = document.createElement('div');
+      div.className = 'msg-continued';
+      div.textContent = msg.content;
+      area.appendChild(div);
+    } else {
+      var time = new Date(msg.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      var div  = document.createElement('div');
+      div.className = 'msg-group';
+      div.innerHTML =
+        '<img class="ava" src="' + msg.avatar + '" alt="' + escHtml(msg.username) + '">' +
+        '<div class="body">' +
+          '<div class="meta">' +
+            '<b>' + escHtml(msg.username) + '</b>' +
+            '<span class="pronouns">' + escHtml(msg.pronouns) + '</span>' +
+            '<time>' + time + '</time>' +
+          '</div>' +
+          '<p>' + escHtml(msg.content) + '</p>' +
+        '</div>';
+      area.appendChild(div);
+      lastMsgUser = msg.username;
+    }
+  }
+
+  function escHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function scrollToBottom() {
+    var a = document.getElementById('chat-area');
+    a.scrollTop = a.scrollHeight;
+  }
+
+  // ── Input ───────────────────────────────────────────────────────
+  window.handleKey = function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      var text = e.target.value.trim();
+      if (!text || !currentChannel) return;
+      socket.emit('send-msg', { channelId: currentChannel.id, content: text });
+      e.target.value = '';
+    }
+  };
+
+  // ── Logout ──────────────────────────────────────────────────────
+  window.doLogout = function() {
+    localStorage.removeItem('nexus_token');
+    location.reload();
+  };
+
+  // ── Toast ───────────────────────────────────────────────────────
+  window.toast = function(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(function() { t.classList.remove('show'); }, 3000);
+  };
+
+  // ── Auto-login ──────────────────────────────────────────────────
+  var token = localStorage.getItem('nexus_token');
+  if (token) {
+    try {
+      var payload = JSON.parse(atob(token.split('.')[1]));
+      if (payload.exp * 1000 < Date.now()) {
+        localStorage.removeItem('nexus_token');
+      } else {
+        fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ _token: token })
+        }).catch(function() {});
+        socket.emit('auth', { token: token });
+        socket.once('auth-success', function(user) {
+          startApp(user);
+        });
+        socket.once('auth-error', function() {
+          localStorage.removeItem('nexus_token');
+        });
+      }
+    } catch(e) {
+      localStorage.removeItem('nexus_token');
+    }
+  }
+});
+</script>
 </body>
 </html>
