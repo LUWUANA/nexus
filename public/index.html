@@ -14,6 +14,9 @@
       --darker-bg: #12122a;
       --text-primary: #e0e0e0;
       --text-secondary: #a0a0a0;
+      --input-bg: #1e1e2e;
+      --input-text: #dbdee1;
+      --input-placeholder: #6c7284;
       --glow: 0 0 8px var(--violet-neon);
       --glow-active: 0 0 12px var(--pink-neon);
     }
@@ -116,148 +119,95 @@
       z-index: 2;
     }
 
-    .auth-container::before {
-      content: '';
-      position: absolute;
-      top: -2px;
-      left: -2px;
-      right: -2px;
-      bottom: -2px;
-      background: linear-gradient(45deg, var(--violet-neon), var(--pink-neon));
-      z-index: -1;
-      border-radius: 18px;
-      animation: borderGlow 3s linear infinite;
-    }
-
-    @keyframes borderGlow {
-      0% { clip-path: polygon(0% 0%, 0% 100%, 25% 100%, 25% 25%, 75% 25%, 75% 75%, 25% 75%, 25% 100%, 100% 100%, 100% 0%); }
-      100% { clip-path: polygon(0% 0%, 0% 100%, 100% 100%, 100% 75%, 75% 75%, 75% 25%, 25% 25%, 25% 75%, 75% 75%, 75% 100%, 100% 100%, 100% 0%); }
-    }
-
     .auth-tabs {
       display: flex;
-      margin-bottom: 24px;
-      border-bottom: 1px solid rgba(124, 58, 237, 0.2);
-      position: relative;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid rgba(124, 58, 237, 0.3);
     }
 
     .auth-tab {
       flex: 1;
-      padding: 16px;
+      padding: 12px 0;
       text-align: center;
       cursor: pointer;
       color: var(--text-secondary);
-      font-size: 1.1rem;
-      font-weight: 600;
-      transition: all 0.3s ease;
-      position: relative;
+      transition: color 0.3s;
     }
 
     .auth-tab.active {
-      color: var(--violet-neon);
-    }
-
-    .auth-tab.active::after {
-      content: '';
-      position: absolute;
-      bottom: -1px;
-      left: 0;
-      width: 100%;
-      height: 2px;
-      background: linear-gradient(90deg, var(--violet-neon), var(--pink-neon));
+      color: var(--text-primary);
+      border-bottom: 2px solid var(--violet-neon);
     }
 
     .auth-form {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
+      display: none;
+    }
+
+    .auth-form.active {
+      display: block;
     }
 
     .form-group {
-      position: relative;
+      margin-bottom: 1.5rem;
     }
 
-    .auth-input {
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: var(--text-secondary);
+    }
+
+    .form-group input {
       width: 100%;
-      background-color: rgba(124, 58, 237, 0.1);
-      border: 1px solid rgba(124, 58, 237, 0.3);
-      border-radius: 12px;
-      padding: 16px 16px 16px 48px;
-      color: var(--text-primary);
+      padding: 12px 16px;
+      background: var(--input-bg);
+      border: 1px solid rgba(124, 58, 237, 0.2);
+      border-radius: 8px;
+      color: var(--input-text);
       font-size: 1rem;
-      transition: all 0.3s ease;
+      transition: border-color 0.3s;
     }
 
-    .auth-input:focus {
+    .form-group input::placeholder {
+      color: var(--input-placeholder);
+    }
+
+    .form-group input:focus {
       outline: none;
-      border-color: var(--violet-neon);
-      box-shadow: var(--glow-active);
-    }
-
-    .input-icon {
-      position: absolute;
-      left: 16px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--text-secondary);
-    }
-
-    .auth-input:focus + .input-icon {
-      color: var(--violet-neon);
-    }
-
-    .pronouns-selector {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 8px;
-    }
-
-    .pronoun-badge {
-      background-color: rgba(124, 58, 237, 0.2);
-      border: 1px solid rgba(124, 58, 237, 0.3);
-      border-radius: 20px;
-      padding: 8px 16px;
-      color: var(--text-secondary);
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .pronoun-badge.active {
-      background-color: var(--violet-neon);
-      color: white;
       border-color: var(--violet-neon);
     }
 
     .auth-button {
-      background: linear-gradient(90deg, var(--violet-neon), var(--pink-neon));
+      width: 100%;
+      padding: 12px;
+      background: var(--violet-neon);
       border: none;
-      border-radius: 12px;
-      padding: 16px;
+      border-radius: 8px;
       color: white;
-      font-size: 1.1rem;
+      font-size: 1rem;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.3s ease;
-      margin-top: 8px;
-      box-shadow: var(--glow);
+      transition: background 0.3s;
     }
 
     .auth-button:hover {
-      transform: translateY(-2px);
-      box-shadow: var(--glow-active);
+      background: var(--pink-neon);
     }
 
-    .auth-button:active {
-      transform: translateY(0);
-    }
-
-    .error-message {
-      color: #f87171;
-      font-size: 0.9rem;
-      margin-top: -16px;
-      margin-bottom: 16px;
+    .auth-footer {
+      margin-top: 1.5rem;
       text-align: center;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .auth-footer a {
+      color: var(--violet-neon);
+      text-decoration: none;
+    }
+
+    .auth-footer a:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
@@ -265,60 +215,51 @@
   <div class="particles" id="particles"></div>
   <div class="auth-screen">
     <h1 class="nexus-logo">NEXUS</h1>
-    <p class="welcome-message">Bienvenue dans le hub inclusif où chaque voix compte. Rejoins une communauté qui célèbre la diversité.</p>
-    
+    <p class="welcome-message">Rejoins des hubs inclusifs où chaque voix compte.</p>
+
     <div class="auth-container">
       <div class="auth-tabs">
         <div class="auth-tab active" data-tab="login">Connexion</div>
         <div class="auth-tab" data-tab="register">Inscription</div>
       </div>
-      
-      <div class="auth-form" id="login-form">
+
+      <form class="auth-form active" id="login-form">
         <div class="form-group">
-          <input type="text" class="auth-input" id="login-username" placeholder="Pseudo" required>
-          <i class="fas fa-user input-icon"></i>
+          <label for="login-username">Pseudo</label>
+          <input type="text" id="login-username" placeholder="Ton pseudo" required>
         </div>
         <div class="form-group">
-          <input type="password" class="auth-input" id="login-password" placeholder="Mot de passe" required>
-          <i class="fas fa-lock input-icon"></i>
+          <label for="login-password">Mot de passe</label>
+          <input type="password" id="login-password" placeholder="Ton mot de passe" required>
         </div>
-        <div class="error-message" id="login-error"></div>
-        <button class="auth-button" id="login-submit">Se connecter</button>
-      </div>
-      
-      <div class="auth-form" id="register-form" style="display: none;">
+        <button type="submit" class="auth-button">Se connecter</button>
+      </form>
+
+      <form class="auth-form" id="register-form">
         <div class="form-group">
-          <input type="text" class="auth-input" id="register-username" placeholder="Pseudo (2-32 caractères)" required>
-          <i class="fas fa-user input-icon"></i>
-        </div>
-        <div class="form-group">
-          <input type="password" class="auth-input" id="register-password" placeholder="Mot de passe" required>
-          <i class="fas fa-lock input-icon"></i>
+          <label for="register-username">Pseudo</label>
+          <input type="text" id="register-username" placeholder="Choisis un pseudo" required>
         </div>
         <div class="form-group">
-          <input type="password" class="auth-input" id="register-confirm-password" placeholder="Confirmer le mot de passe" required>
-          <i class="fas fa-lock input-icon"></i>
+          <label for="register-password">Mot de passe</label>
+          <input type="password" id="register-password" placeholder="Crée un mot de passe" required>
         </div>
         <div class="form-group">
-          <div style="color: var(--text-secondary); margin-bottom: 8px;">Tes pronoms :</div>
-          <div class="pronouns-selector">
-            <div class="pronoun-badge active" data-pronoun="iel">iel</div>
-            <div class="pronoun-badge" data-pronoun="il">il</div>
-            <div class="pronoun-badge" data-pronoun="elle">elle</div>
-            <div class="pronoun-badge" data-pronoun="iel/il">iel/il</div>
-            <div class="pronoun-badge" data-pronoun="iel/elle">iel/elle</div>
-            <div class="pronoun-badge" data-pronoun="autre">autre</div>
-          </div>
+          <label for="register-pronouns">Pronoms (optionnel)</label>
+          <input type="text" id="register-pronouns" placeholder="iel/iel·le/...">
         </div>
-        <div class="error-message" id="register-error"></div>
-        <button class="auth-button" id="register-submit">Entrer dans le Nexus</button>
+        <button type="submit" class="auth-button">S'inscrire</button>
+      </form>
+
+      <div class="auth-footer">
+        <a href="#">Besoin d'aide ?</a>
       </div>
     </div>
   </div>
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      // Particles effect
+      // Particles background
       const particlesContainer = document.getElementById('particles');
       for (let i = 0; i < 50; i++) {
         const particle = document.createElement('div');
@@ -331,97 +272,88 @@
         particlesContainer.appendChild(particle);
       }
 
-      // Tab switching
+      // Auth tabs
       const tabs = document.querySelectorAll('.auth-tab');
-      const loginForm = document.getElementById('login-form');
-      const registerForm = document.getElementById('register-form');
+      const forms = document.querySelectorAll('.auth-form');
       
       tabs.forEach(tab => {
         tab.addEventListener('click', () => {
           tabs.forEach(t => t.classList.remove('active'));
           tab.classList.add('active');
           
-          if (tab.dataset.tab === 'login') {
-            loginForm.style.display = 'flex';
-            registerForm.style.display = 'none';
+          forms.forEach(form => form.classList.remove('active'));
+          document.getElementById(tab.dataset.tab + '-form').classList.add('active');
+        });
+      });
+
+      // Login form
+      document.getElementById('login-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const username = document.getElementById('login-username').value;
+        const password = document.getElementById('login-password').value;
+        
+        try {
+          const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password })
+          });
+          
+          const data = await response.json();
+          if (response.ok) {
+            localStorage.setItem('nexus_token', data.token);
+            loadMainInterface();
           } else {
-            loginForm.style.display = 'none';
-            registerForm.style.display = 'flex';
+            alert(data.error || 'Échec de la connexion');
           }
-        });
-      });
-
-      // Pronouns selector
-      const pronounBadges = document.querySelectorAll('.pronoun-badge');
-      pronounBadges.forEach(badge => {
-        badge.addEventListener('click', () => {
-          pronounBadges.forEach(b => b.classList.remove('active'));
-          badge.classList.add('active');
-        });
-      });
-
-      // Login functionality
-      const loginSubmit = document.getElementById('login-submit');
-      const loginUsername = document.getElementById('login-username');
-      const loginPassword = document.getElementById('login-password');
-      const loginError = document.getElementById('login-error');
-      
-      loginSubmit.addEventListener('click', async () => {
-        loginError.textContent = '';
-        
-        const response = await fetch('/api/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: loginUsername.value,
-            password: loginPassword.value
-          })
-        });
-        
-        const data = await response.json();
-        if (response.ok) {
-          localStorage.setItem('nexus_token', data.token);
-          window.location.reload();
-        } else {
-          loginError.textContent = data.error || 'Échec de la connexion';
+        } catch (error) {
+          console.error('Erreur:', error);
+          alert('Une erreur est survenue');
         }
       });
 
-      // Register functionality
-      const registerSubmit = document.getElementById('register-submit');
-      const registerUsername = document.getElementById('register-username');
-      const registerPassword = document.getElementById('register-password');
-      const registerConfirmPassword = document.getElementById('register-confirm-password');
-      const registerError = document.getElementById('register-error');
-      
-      registerSubmit.addEventListener('click', async () => {
-        registerError.textContent = '';
+      // Register form
+      document.getElementById('register-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const username = document.getElementById('register-username').value;
+        const password = document.getElementById('register-password').value;
+        const pronouns = document.getElementById('register-pronouns').value;
         
-        if (registerPassword.value !== registerConfirmPassword.value) {
-          registerError.textContent = 'Les mots de passe ne correspondent pas';
-          return;
-        }
-        
-        const selectedPronoun = document.querySelector('.pronoun-badge.active').dataset.pronoun;
-        
-        const response = await fetch('/api/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: registerUsername.value,
-            password: registerPassword.value,
-            pronouns: selectedPronoun
-          })
-        });
-        
-        const data = await response.json();
-        if (response.ok) {
-          localStorage.setItem('nexus_token', data.token);
-          window.location.reload();
-        } else {
-          registerError.textContent = data.error || 'Échec de l\'inscription';
+        try {
+          const response = await fetch('/api/register', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password, pronouns })
+          });
+          
+          const data = await response.json();
+          if (response.ok) {
+            localStorage.setItem('nexus_token', data.token);
+            loadMainInterface();
+          } else {
+            alert(data.error || 'Échec de l\'inscription');
+          }
+        } catch (error) {
+          console.error('Erreur:', error);
+          alert('Une erreur est survenue');
         }
       });
+
+      // Check for existing token
+      if (localStorage.getItem('nexus_token')) {
+        loadMainInterface();
+      }
+
+      function loadMainInterface() {
+        document.querySelector('.auth-screen').style.display = 'none';
+        // Socket.io logic would be initialized here
+        // This is where the main app interface would load
+        console.log('Chargement de l\'interface principale...');
+      }
     });
   </script>
 </body>
