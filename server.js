@@ -15,12 +15,6 @@ const {
   getServers, getChannelsByServer, getChannelById,
   getMessages, createMessage,
   joinServer,
-  // DM specific functions
-  getDmConversation,
-  createDmConversation,
-  getDmMessages,
-  createDmMessage,
-  getDmConversationById, // Assumed to be imported from db.js for fetching by conversation ID
 } = require('./db');
 
 const app    = express();
@@ -332,78 +326,6 @@ io.on('connection', (socket) => {
     };
     io.to(`channel:${channelId}`).emit('new-msg', msg);
   });
-
-  // ─── Socket.io : Direct Messages (DM) ───────────────────────────────────────
-  socket.on('start-dm', ({ recipientId }) => {
-    const session = sessions.get(socket.id);
-    if (!session || !recipientId) return;
-
-    // Check if a conversation already exists between the two users
-    let conversation = getDmConversation.get(session.userId, recipientId);
-    if (!conversation) {
-      // If not, create a new one
-      const result = createDmConversation.run(session.userId, recipientId);
-      // Re-fetch to get the complete conversation object with its ID
-      conversation = getDmConversation.get(session.userId, recipientId);
-    }
-
-    // Join the DM room
-    const dmRoomId = `dm:${conversation.id}`;
-    if (session.currentChannel) socket.leave(`channel:${session.currentChannel}`); // Leave any public channel
-    session.currentChannel = null; // Ensure currentChannel is null for DMs
-    socket.join(dmRoomId);
-
-    // Get conversation history
-    const history = getDmMessages.all(conversation.id).reverse();
-
-    // Emit success with conversation details and history
-    socket.emit('dm-conversation-started', { conversationId: conversation.id, recipientId, messages: history });
-
-    // Also notify the recipient if they are online and in a session
-    const recipientSocketId = Array.from(sessions.entries())
-                                    .find(([, s]) => s.userId === recipientId)?.[0];
-    if (recipientSocketId && recipientSocketId !== socket.id) {
-        // The recipient might already be in a conversation with this user or in another channel.
-        // We just ensure they are also joined to this DM room.
-        // If they are not in a conversation with this user, they should get a notification.
-        // For now, let's just make sure they join the room.
-        io.sockets.sockets.get(recipientSocketId)?.join(dmRoomId);
-        // Optionally, emit an event to the recipient to indicate a new DM started
-        io.to(recipientSocketId).emit('new-dm-notification', {
-            conversationId: conversation.id,
-            initiatorId: session.userId,
-            initiatorUsername: session.username
-        });
-    }
-  });
-
-  socket.on('send-dm', ({ conversationId, content }) => {
-    const session = sessions.get(socket.id);
-    if (!session || !content || !content.trim() || content.length > 2000) return;
-
-    // Ensure the user is part of this conversation
-    const conversation = getDmConversationById.get(conversationId);
-    if (!conversation || (conversation.user1_id !== session.userId && conversation.user2_id !== session.userId)) {
-      return socket.emit('dm-error', 'Vous n\'êtes pas autorisé à envoyer des messages dans cette conversation.');
-    }
-
-    const result = createDmMessage.run(conversationId, session.userId, content.trim());
-    const user   = getUserById.get(session.userId); // Get sender details
-
-    const msg = {
-      id: result.lastInsertRowid,
-      conversation_id: conversationId,
-      sender_id: session.userId,
-      content: content.trim(),
-      created_at: new Date().toISOString(),
-      username: user.username,
-      pronouns: user.pronouns,
-      avatar: user.avatar,
-    };
-
-    io.to(`dm:${conversationId}`).emit('new-dm-msg', msg);
-  });
-  // ────────────────────────────────────────────────────────────────────────────
 
   socket.on('rtc-offer',     (data) => socket.to(data.to).emit('rtc-offer',     { from: socket.id, signal: data.signal }));
   socket.on('rtc-answer',    (data) => socket.to(data.to).emit('rtc-answer',    { from: socket.id, signal: data.signal }));
