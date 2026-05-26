@@ -5,929 +5,226 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NEXUS</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
   <script src="/socket.io/socket.io.js"></script>
   <style>
     :root {
-      --violet-primary: #6e57ff;
-      --violet-secondary: #5a46e8;
-      --neon-accent: #a78bfa;
-      --bg-primary: #12141c;
-      --bg-secondary: #1a1c24;
-      --bg-tertiary: #232634;
-      --bg-elevated: #2a2d3e;
-      --bg-input: #31344a;
-      --bg-message: #2d3042;
-      --text-primary: #e0e0e6;
-      --text-secondary: #a1a1b5;
-      --text-accent: #a78bfa;
-      --radius-sm: 6px;
-      --radius-md: 12px;
-      --radius-lg: 18px;
-      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-      --shadow-md: 0 4px 16px rgba(110, 87, 255, 0.2);
+      --violet:    #6e57ff;
+      --violet-2:  #5a46e8;
+      --neon:      #a78bfa;
+      --bg:        #1e1f22;
+      --bg-side:   #2b2d31;
+      --bg-chat:   #313338;
+      --bg-input:  #383a40;
+      --bg-dark:   #111214;
+      --text:      #dbdee1;
+      --text-muted:#949ba4;
+      --green:     #23a55a;
+      --red:       #f23f43;
+      --radius:    8px;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: 'Inter', sans-serif;
-      background: var(--bg-primary);
-      color: var(--text-primary);
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
       height: 100vh;
       overflow: hidden;
     }
 
-    /* Login Screen */
-    #login-screen {
-      position: fixed;
-      inset: 0;
-      background: var(--bg-primary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    /* ── Auth ───────────────────────────────────────────────────── */
+    #auth-screen {
+      position: fixed; inset: 0;
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
       z-index: 200;
-      background-image: radial-gradient(circle at 10% 20%, rgba(110, 87, 255, 0.1) 0%, transparent 30%);
     }
 
-    .login-card {
-      background: var(--bg-tertiary);
-      border-radius: var(--radius-lg);
-      padding: 48px;
+    .auth-card {
+      background: var(--bg-side);
+      border-radius: 16px;
+      padding: 40px;
       width: 420px;
-      box-shadow: var(--shadow-md);
-      border: 1px solid rgba(110, 87, 255, 0.1);
-      text-align: center;
+      box-shadow: 0 24px 64px rgba(0,0,0,.5);
     }
 
-    .login-card h1 {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 2.2rem;
-      font-weight: 700;
-      color: var(--neon-accent);
-      margin-bottom: 12px;
-      letter-spacing: 1px;
-    }
+    .auth-card h1 { font-size: 1.8rem; font-weight: 700; color: var(--neon); text-align: center; margin-bottom: 4px; }
+    .auth-card p  { text-align: center; color: var(--text-muted); margin-bottom: 28px; font-size: .9rem; }
 
-    .login-card p {
-      color: var(--text-secondary);
-      margin-bottom: 32px;
-      font-size: 0.95rem;
-    }
+    .auth-tabs { display: flex; margin-bottom: 24px; border-radius: var(--radius); overflow: hidden; }
+    .auth-tab  { flex: 1; padding: 10px; text-align: center; cursor: pointer; background: var(--bg-input); color: var(--text-muted); font-size: .9rem; font-weight: 500; transition: .2s; }
+    .auth-tab.active { background: var(--violet); color: #fff; }
 
-    .login-field {
-      margin-bottom: 24px;
-      text-align: left;
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); margin-bottom: 6px; }
+    .field input, .field select {
+      width: 100%; padding: 12px 14px;
+      background: var(--bg-input); border: 1.5px solid transparent;
+      border-radius: var(--radius); color: var(--text);
+      font-family: inherit; font-size: .95rem;
+      transition: border-color .2s; outline: none;
     }
+    .field input:focus, .field select:focus { border-color: var(--violet); }
+    .field select option { background: var(--bg-input); }
 
-    .login-field label {
-      display: block;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-secondary);
-      margin-bottom: 8px;
+    .btn-primary {
+      width: 100%; padding: 13px;
+      background: var(--violet); color: #fff;
+      border: none; border-radius: var(--radius);
+      font-family: inherit; font-size: 1rem; font-weight: 700;
+      cursor: pointer; transition: background .2s; margin-top: 4px;
     }
+    .btn-primary:hover { background: var(--violet-2); }
 
-    .login-field input {
-      width: 100%;
-      padding: 14px 16px;
-      background: var(--bg-elevated);
-      border: 1px solid rgba(110, 87, 255, 0.2);
-      border-radius: var(--radius-sm);
-      color: var(--text-primary);
-      font-family: inherit;
-      font-size: 0.95rem;
-      transition: border-color 0.2s;
-      outline: none;
+    #auth-error { color: var(--red); font-size: .85rem; text-align: center; margin-top: 12px; min-height: 20px; }
+
+    /* ── App ────────────────────────────────────────────────────── */
+    #app { display: none; grid-template-columns: 72px 240px 1fr; height: 100vh; }
+    #app.visible { display: grid; }
+
+    .servers {
+      background: var(--bg-dark);
+      display: flex; flex-direction: column; align-items: center;
+      padding: 12px 0; gap: 8px; overflow-y: auto;
     }
-
-    .login-field input:focus {
-      border-color: var(--violet-primary);
+    .srv-item { position: relative; display: flex; align-items: center; }
+    .srv-pill { width: 4px; height: 0; background: var(--text); border-radius: 0 4px 4px 0; position: absolute; left: 0; transition: height .2s; }
+    .srv-item.active .srv-pill { height: 40px; }
+    .srv-icon {
+      width: 48px; height: 48px; background: var(--bg-side); border-radius: 50%;
+      cursor: pointer; transition: border-radius .2s, background .2s;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 1.1rem; user-select: none;
     }
+    .srv-icon:hover, .srv-item.active .srv-icon { border-radius: 30%; background: var(--violet); }
+    .srv-sep { width: 32px; height: 2px; background: var(--bg-side); border-radius: 1px; }
 
-    .login-btn {
-      width: 100%;
-      padding: 14px;
-      background: var(--violet-primary);
-      color: #fff;
-      border: none;
-      border-radius: var(--radius-sm);
-      font-family: inherit;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .login-btn:hover {
-      background: var(--violet-secondary);
-    }
-
-    #login-error {
-      color: #f23f43;
-      font-size: 0.85rem;
-      margin-top: 16px;
-      min-height: 20px;
-    }
-
-    .recovery-links {
-      margin-top: 20px;
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.85rem;
-    }
-
-    .recovery-links a {
-      color: var(--text-secondary);
-      text-decoration: none;
-      transition: color 0.2s;
-    }
-
-    .recovery-links a:hover {
-      color: var(--neon-accent);
-    }
-
-    /* Recovery Modal */
-    #recovery-modal {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.7);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 300;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s;
-    }
-
-    #recovery-modal.visible {
-      opacity: 1;
-      pointer-events: all;
-    }
-
-    .recovery-modal-card {
-      background: var(--bg-tertiary);
-      border-radius: var(--radius-lg);
-      padding: 32px;
-      width: 420px;
-      box-shadow: var(--shadow-md);
-      border: 1px solid rgba(110, 87, 255, 0.1);
-    }
-
-    .recovery-modal-card h2 {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 1.5rem;
-      color: var(--neon-accent);
-      margin-bottom: 16px;
-      text-align: center;
-    }
-
-    .recovery-modal-card p {
-      color: var(--text-secondary);
-      margin-bottom: 24px;
-      text-align: center;
-    }
-
-    .recovery-field {
-      margin-bottom: 18px;
-    }
-
-    .recovery-field label {
-      display: block;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-secondary);
-      margin-bottom: 8px;
-    }
-
-    .recovery-field input {
-      width: 100%;
-      padding: 14px 16px;
-      background: var(--bg-elevated);
-      border: 1px solid rgba(110, 87, 255, 0.2);
-      border-radius: var(--radius-sm);
-      color: var(--text-primary);
-      font-family: inherit;
-      font-size: 0.95rem;
-      transition: border-color 0.2s;
-      outline: none;
-    }
-
-    .recovery-field input:focus {
-      border-color: var(--violet-primary);
-    }
-
-    .recovery-btn {
-      width: 100%;
-      padding: 14px;
-      background: var(--violet-primary);
-      color: #fff;
-      border: none;
-      border-radius: var(--radius-sm);
-      font-family: inherit;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-      margin-top: 6px;
-    }
-
-    .recovery-btn:hover {
-      background: var(--violet-secondary);
-    }
-
-    .recovery-error {
-      color: #f23f43;
-      font-size: 0.85rem;
-      text-align: center;
-      margin-top: 14px;
-      min-height: 20px;
-    }
-
-    /* App Layout */
-    #app {
-      display: none;
-      grid-template-columns: 60px 240px 1fr 240px;
-      height: 100vh;
-    }
-
-    #app.visible {
-      display: grid;
-    }
-
-    /* Ultra-Left Sidebar (DMs) */
-    .dms {
-      background: var(--bg-secondary);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 12px 0;
-      gap: 8px;
-      overflow-y: auto;
-    }
-
-    .dm-item {
-      position: relative;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: var(--bg-tertiary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.2s;
-      border: 2px solid transparent;
-    }
-
-    .dm-item:hover, .dm-item.active {
-      border-radius: 35%;
-      background: var(--violet-primary);
-      border-color: var(--neon-accent);
-    }
-
-    .dm-item img {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-
-    .dm-item::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      right: 0;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: #10b981;
-      border: 2px solid var(--bg-secondary);
-    }
-
-    .dm-item.offline::after {
-      background: #6b7280;
-    }
-
-    /* Hubs Sidebar */
-    .hubs {
-      background: var(--bg-tertiary);
-      display: flex;
-      flex-direction: column;
-      border-right: 1px solid rgba(110, 87, 255, 0.1);
-    }
-
-    .hubs-header {
-      padding: 16px;
-      font-weight: 600;
-      font-size: 1.1rem;
-      border-bottom: 1px solid rgba(110, 87, 255, 0.1);
-      color: var(--neon-accent);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .hubs-header .invite-btn {
-      background: var(--violet-primary);
-      color: white;
-      border: none;
-      border-radius: var(--radius-sm);
-      padding: 4px 8px;
-      font-size: 0.7rem;
-      cursor: pointer;
-      font-weight: 600;
-    }
-
-    .channels-list {
-      flex: 1;
-      padding: 12px;
-      overflow-y: auto;
-    }
-
-    .ch-category {
-      font-size: 0.7rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-secondary);
-      padding: 14px 10px 6px;
-    }
-
+    .sidebar { background: var(--bg-side); display: flex; flex-direction: column; }
+    .sidebar-header { padding: 16px; font-weight: 700; font-size: 1rem; border-bottom: 1px solid rgba(255,255,255,.06); }
+    .channels-list { flex: 1; padding: 8px; overflow-y: auto; }
+    .ch-category { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); padding: 16px 8px 4px; }
     .ch-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      color: var(--text-secondary);
-      font-size: 0.95rem;
-      transition: all 0.15s;
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 10px; border-radius: 6px; cursor: pointer;
+      color: var(--text-muted); font-size: .95rem;
+      transition: background .15s, color .15s;
     }
+    .ch-item:hover { background: rgba(255,255,255,.06); color: var(--text); }
+    .ch-item.active { background: rgba(255,255,255,.1); color: var(--text); }
 
-    .ch-item:hover {
-      background: rgba(110, 87, 255, 0.1);
-      color: var(--text-primary);
-    }
+    .user-panel { background: var(--bg-dark); padding: 10px 12px; display: flex; align-items: center; gap: 10px; }
+    .user-panel .avatar { width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--green); }
+    .user-panel .info { flex: 1; min-width: 0; }
+    .user-panel .info b { display: block; font-size: .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-panel .info small { font-size: .75rem; color: var(--text-muted); }
+    .btn-icon { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; border-radius: 4px; font-size: 1rem; transition: color .2s; }
+    .btn-icon:hover { color: var(--text); }
 
-    .ch-item.active {
-      background: rgba(110, 87, 255, 0.2);
-      color: var(--neon-accent);
-    }
+    .chat { display: flex; flex-direction: column; background: var(--bg-chat); }
+    .chat-header { padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,.06); display: flex; align-items: center; gap: 10px; font-weight: 600; }
 
-    .ch-item .icon {
-      font-size: 0.8rem;
-      color: var(--text-secondary);
-    }
+    #chat-area { flex: 1; padding: 16px 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
 
-    .ch-item.active .icon {
-      color: var(--neon-accent);
-    }
+    .msg-group { display: flex; gap: 16px; margin-top: 16px; }
+    .msg-group .ava { width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; }
+    .msg-group .meta { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+    .msg-group .meta b { color: var(--violet); font-size: .95rem; }
+    .msg-group .meta .pronouns { font-size: .72rem; color: var(--text-muted); background: rgba(110,87,255,.15); padding: 1px 6px; border-radius: 10px; }
+    .msg-group .meta time { font-size: .75rem; color: var(--text-muted); }
+    .msg-group p { line-height: 1.4; word-break: break-word; }
+    .msg-continued { padding: 1px 0 1px 56px; }
+    .msg-continued:hover, .msg-group:hover { background: rgba(0,0,0,.1); border-radius: 4px; }
 
-    /* Chat Area */
-    .chat {
-      display: flex;
-      flex-direction: column;
-      background: var(--bg-elevated);
-      position: relative;
-    }
+    .input-bar { padding: 0 20px 24px; }
+    .input-wrap { display: flex; align-items: center; background: var(--bg-input); border-radius: var(--radius); padding: 0 16px; }
+    .input-wrap input { flex: 1; background: none; border: none; padding: 14px 0; color: var(--text); font-family: inherit; font-size: .95rem; outline: none; }
+    .input-wrap input::placeholder { color: var(--text-muted); }
 
-    .chat-header {
-      padding: 12px 24px;
-      border-bottom: 1px solid rgba(110, 87, 255, 0.1);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-weight: 600;
-      color: var(--neon-accent);
-      background: rgba(42, 45, 62, 0.5);
-      backdrop-filter: blur(12px);
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 3px; }
 
-    .chat-header .icon {
-      font-size: 1.1rem;
-    }
-
-    #chat-area {
-      flex: 1;
-      padding: 20px 24px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .message-bubble {
-      background: var(--bg-message);
-      padding: 14px 18px;
-      border-radius: var(--radius-md);
-      max-width: 70%;
-      word-break: break-word;
-      line-height: 1.5;
-    }
-
-    .message-bubble.sent {
-      align-self: flex-end;
-      background: var(--violet-primary);
-      border-bottom-right-radius: 4px;
-    }
-
-    .message-bubble.received {
-      align-self: flex-start;
-      border-bottom-left-radius: 4px;
-    }
-
-    .message-bubble .author {
-      font-weight: 600;
-      color: var(--neon-accent);
-      margin-bottom: 4px;
-      font-size: 0.9rem;
-    }
-
-    .message-bubble .pronouns {
-      font-size: 0.7rem;
-      color: var(--text-secondary);
-      background: rgba(110, 87, 255, 0.15);
-      padding: 2px 6px;
-      border-radius: 8px;
-      margin-left: 6px;
-    }
-
-    .message-bubble time {
-      font-size: 0.7rem;
-      color: var(--text-secondary);
-      margin-left: 8px;
-    }
-
-    .typing-indicator {
-      padding: 12px 24px 0;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-      opacity: 0;
-      transition: opacity 0.3s;
-      height: 24px;
-    }
-
-    .typing-indicator.visible {
-      opacity: 1;
-    }
-
-    .typing-indicator .avatar {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-    }
-
-    .typing-indicator .dots {
-      display: flex;
-      gap: 3px;
-    }
-
-    .typing-indicator .dot {
-      width: 6px;
-      height: 6px;
-      background: var(--text-secondary);
-      border-radius: 50%;
-      animation: typingAnimation 1.4s infinite ease-in-out;
-    }
-
-    .typing-indicator .dot:nth-child(1) {
-      animation-delay: 0s;
-    }
-
-    .typing-indicator .dot:nth-child(2) {
-      animation-delay: 0.2s;
-    }
-
-    .typing-indicator .dot:nth-child(3) {
-      animation-delay: 0.4s;
-    }
-
-    @keyframes typingAnimation {
-      0%, 60%, 100% { transform: translateY(0); }
-      30% { transform: translateY(-4px); }
-    }
-
-    .input-bar {
-      padding: 0 24px 28px;
-    }
-
-    .input-wrap {
-      display: flex;
-      align-items: center;
-      background: var(--bg-input);
-      border-radius: var(--radius-lg);
-      padding: 0 20px;
-      box-shadow: var(--shadow-sm);
-    }
-
-    .input-wrap input {
-      flex: 1;
-      background: none;
-      border: none;
-      padding: 16px 0;
-      color: var(--text-primary);
-      font-family: inherit;
-      font-size: 0.98rem;
-      outline: none;
-    }
-
-    .input-wrap input::placeholder {
-      color: var(--text-secondary);
-    }
-
-    /* Members Sidebar */
-    .members {
-      background: var(--bg-secondary);
-      border-left: 1px solid rgba(110, 87, 255, 0.1);
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-    }
-
-    .members-header {
-      padding: 18px 16px;
-      font-weight: 600;
-      font-size: 0.9rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-secondary);
-      border-bottom: 1px solid rgba(110, 87, 255, 0.1);
-    }
-
-    .members-list {
-      flex: 1;
-      padding: 12px;
-    }
-
-    .member-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 12px;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-
-    .member-item:hover {
-      background: rgba(110, 87, 255, 0.1);
-    }
-
-    .member-avatar {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      border: 2px solid var(--violet-primary);
-      position: relative;
-    }
-
-    .member-avatar img {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-
-    .member-avatar::after {
-      content: '';
-      position: absolute;
-      bottom: 2px;
-      right: 2px;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: #10b981;
-      border: 2px solid var(--bg-secondary);
-    }
-
-    .member-avatar.offline::after {
-      background: #6b7280;
-    }
-
-    .member-info {
-      flex: 1;
-    }
-
-    .member-username {
-      font-size: 0.9rem;
-      color: var(--text-primary);
-    }
-
-    .member-pronouns {
-      font-size: 0.7rem;
-      color: var(--text-secondary);
-      background: rgba(110, 87, 255, 0.15);
-      padding: 2px 6px;
-      border-radius: 8px;
-      display: inline-block;
-      margin-left: 6px;
-    }
-
-    /* Modal */
-    .modal {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.7);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 300;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s;
-    }
-
-    .modal.visible {
-      opacity: 1;
-      pointer-events: all;
-    }
-
-    .modal-card {
-      background: var(--bg-tertiary);
-      border-radius: var(--radius-lg);
-      padding: 32px;
-      width: 460px;
-      box-shadow: var(--shadow-md);
-      border: 1px solid rgba(110, 87, 255, 0.1);
-    }
-
-    .modal-card h2 {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 1.5rem;
-      color: var(--neon-accent);
-      margin-bottom: 16px;
-      text-align: center;
-    }
-
-    .modal-tabs {
-      display: flex;
-      margin-bottom: 24px;
-      border-radius: var(--radius-md);
-      overflow: hidden;
-      background: var(--bg-elevated);
-    }
-
-    .modal-tab {
-      flex: 1;
-      padding: 12px;
-      text-align: center;
-      cursor: pointer;
-      color: var(--text-secondary);
-      font-size: 0.9rem;
-      font-weight: 500;
-      transition: all 0.2s;
-    }
-
-    .modal-tab.active {
-      background: var(--violet-primary);
-      color: #fff;
-    }
-
-    .modal-field {
-      margin-bottom: 18px;
-    }
-
-    .modal-field label {
-      display: block;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-secondary);
-      margin-bottom: 8px;
-    }
-
-    .modal-field input {
-      width: 100%;
-      padding: 14px 16px;
-      background: var(--bg-elevated);
-      border: 1px solid rgba(110, 87, 255, 0.2);
-      border-radius: var(--radius-sm);
-      color: var(--text-primary);
-      font-family: inherit;
-      font-size: 0.95rem;
-      transition: border-color 0.2s;
-      outline: none;
-    }
-
-    .modal-field input:focus {
-      border-color: var(--violet-primary);
-    }
-
-    .modal-btn {
-      width: 100%;
-      padding: 14px;
-      background: var(--violet-primary);
-      color: #fff;
-      border: none;
-      border-radius: var(--radius-sm);
-      font-family: inherit;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-      margin-top: 6px;
-    }
-
-    .modal-btn:hover {
-      background: var(--violet-secondary);
-    }
-
-    .modal-error {
-      color: #f23f43;
-      font-size: 0.85rem;
-      text-align: center;
-      margin-top: 14px;
-      min-height: 20px;
-    }
-
-    /* Toast */
-    #toast {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      background: var(--bg-tertiary);
-      color: var(--text-primary);
-      padding: 14px 24px;
-      border-radius: var(--radius-md);
-      border-left: 3px solid var(--violet-primary);
-      box-shadow: var(--shadow-md);
-      font-size: 0.92rem;
-      opacity: 0;
-      transition: opacity 0.3s;
-      z-index: 999;
-      pointer-events: none;
-    }
-
-    #toast.show {
-      opacity: 1;
-    }
-
-    /* Scrollbar */
-    ::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: rgba(110, 87, 255, 0.2);
-      border-radius: 4px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(110, 87, 255, 0.3);
-    }
+    #toast { position: fixed; bottom: 24px; right: 24px; background: var(--bg-side); color: var(--text); padding: 12px 20px; border-radius: var(--radius); border-left: 3px solid var(--violet); font-size: .9rem; opacity: 0; transition: opacity .3s; z-index: 999; pointer-events: none; }
+    #toast.show { opacity: 1; }
   </style>
 </head>
 <body>
 
-<div id="login-screen">
-  <div class="login-card">
+<div id="auth-screen">
+  <div class="auth-card">
     <h1>✦ NEXUS</h1>
-    <p>Rejoins l'espace cyber-inclusif</p>
-    <div class="login-field">
-      <label>Pseudo</label>
-      <input type="text" id="login-username" placeholder="ton_pseudo" autocomplete="off">
-    </div>
-    <div class="login-field">
-      <label>Mot de passe</label>
-      <input type="password" id="login-password" placeholder="••••••••" autocomplete="off">
-    </div>
-    <button class="login-btn" onclick="doLogin()">Accéder à NEXUS</button>
-    <div id="login-error"></div>
-    <div class="recovery-links">
-      <a href="#" onclick="openRecoveryModal('password')">Mot de passe oublié ?</a>
-      <a href="#" onclick="openRecoveryModal('username')">Identifiant oublié ?</a>
-    </div>
-  </div>
-</div>
+    <p>Rejoins la communauté inclusive</p>
 
-<div id="recovery-modal">
-  <div class="recovery-modal-card">
-    <h2 id="recovery-modal-title">Récupération de compte</h2>
-    <p id="recovery-modal-desc">Saisis ton adresse e-mail ou ton pseudo pour recevoir un lien de récupération.</p>
-    <div class="recovery-field">
-      <label id="recovery-field-label">E-mail ou Pseudo</label>
-      <input type="text" id="recovery-input" placeholder="email@exemple.com ou ton_pseudo">
-    </div>
-    <button class="recovery-btn" onclick="submitRecovery()">Envoyer le lien</button>
-    <div id="recovery-error" class="recovery-error"></div>
-  </div>
-</div>
-
-<div id="hub-modal" class="modal">
-  <div class="modal-card">
-    <h2>Gérer les Hubs</h2>
-
-    <div class="modal-tabs">
-      <div class="modal-tab active" onclick="switchModalTab('create')">Créer un Hub</div>
-      <div class="modal-tab" onclick="switchModalTab('join')">Rejoindre un Hub</div>
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="switchTab('login')">Connexion</div>
+      <div class="auth-tab" onclick="switchTab('register')">Inscription</div>
     </div>
 
-    <div id="modal-create">
-      <div class="modal-field">
-        <label>Nom du Hub</label>
-        <input type="text" id="hub-name" placeholder="Mon Hub Cyber">
+    <div id="tab-login">
+      <div class="field"><label>Pseudo</label><input type="text" id="login-user" placeholder="ton_pseudo" autocomplete="username"></div>
+      <div class="field"><label>Mot de passe</label><input type="password" id="login-pass" placeholder="••••••••"></div>
+      <button class="btn-primary" onclick="doLogin()">Se connecter</button>
+    </div>
+
+    <div id="tab-register" style="display:none">
+      <div class="field"><label>Pseudo</label><input type="text" id="reg-user" placeholder="ton_pseudo"></div>
+      <div class="field"><label>Mot de passe</label><input type="password" id="reg-pass" placeholder="••••••••"></div>
+      <div class="field">
+        <label>Pronoms <span style="color:var(--violet)">*</span></label>
+        <select id="reg-pronouns">
+          <option value="iel">iel (Inclusif)</option>
+          <option value="il">il</option>
+          <option value="elle">elle</option>
+          <option value="iel/il">iel/il</option>
+          <option value="iel/elle">iel/elle</option>
+          <option value="Autre">Autre / Demander</option>
+        </select>
       </div>
-      <div class="modal-field">
-        <label>Icône (optionnel)</label>
-        <input type="text" id="hub-icon" placeholder="N">
-      </div>
-      <button class="modal-btn" onclick="createHub()">Créer le Hub</button>
+      <button class="btn-primary" onclick="doRegister()">Créer mon compte</button>
     </div>
 
-    <div id="modal-join" style="display:none">
-      <div class="modal-field">
-        <label>Code d'invitation</label>
-        <input type="text" id="invite-code" placeholder="ABCD1234">
-      </div>
-      <button class="modal-btn" onclick="joinHub()">Rejoindre le Hub</button>
-    </div>
-
-    <div id="modal-error" class="modal-error"></div>
+    <div id="auth-error"></div>
   </div>
 </div>
 
 <div id="app">
-  <!-- Ultra-Left Sidebar (DMs) -->
-  <div class="dms" id="dms-list">
-    <div class="dm-item active">
-      <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Nexus" alt="Nexus Core">
+  <div class="servers" id="servers-list">
+    <div class="srv-item active">
+      <div class="srv-pill"></div>
+      <div class="srv-icon" title="Nexus Core">N</div>
+    </div>
+    <div class="srv-sep"></div>
+    <div class="srv-item">
+      <div class="srv-icon" title="Créer un serveur" onclick="toast('Bientôt disponible !')">+</div>
     </div>
   </div>
 
-  <!-- Hubs Sidebar -->
-  <div class="hubs">
-    <div class="hubs-header">
-      <span id="active-server-name">NEXUS Core</span>
-      <button class="invite-btn" onclick="showInviteCode()">INVITER</button>
-    </div>
-    <div class="channels-list" id="channels-list">
-      <div class="ch-category">ESPACES TEXTE</div>
-      <div class="ch-item active">
-        <span class="icon">◯</span> général
+  <div class="sidebar">
+    <div class="sidebar-header">Nexus Core</div>
+    <div class="channels-list" id="channels-list"></div>
+    <div class="user-panel">
+      <img id="my-avatar" class="avatar" src="" alt="">
+      <div class="info">
+        <b id="my-name">...</b>
+        <small id="my-pronouns"></small>
       </div>
-      <div class="ch-item">
-        <span class="icon">◯</span> bienvenue
-      </div>
-      <div class="ch-category">SCÈNES VOCALES</div>
-      <div class="ch-item">
-        <span class="icon">🔊</span> vocal-général
-      </div>
+      <button class="btn-icon" onclick="doLogout()" title="Se déconnecter">⏏</button>
     </div>
   </div>
 
-  <!-- Chat Area -->
   <div class="chat">
     <div class="chat-header">
-      <span class="icon">◯</span>
+      <span>#</span>
       <span id="active-channel-name">général</span>
-      <div class="chat-profile">
-        <div class="profile-avatar" id="my-avatar-btn">
-          <img id="my-avatar" src="" alt="">
-        </div>
-        <span class="profile-username" id="my-username"></span>
-      </div>
     </div>
     <div id="chat-area"></div>
-    <div class="typing-indicator" id="typing-indicator">
-      <img class="avatar" id="typing-avatar" src="" alt="">
-      <span id="typing-username"></span>
-      <span class="pronouns" id="typing-pronouns"></span>
-      <span> est en train d'écrire</span>
-      <div class="dots">
-        <div class="dot"></div>
-        <div class="dot"></div>
-        <div class="dot"></div>
-      </div>
-    </div>
     <div class="input-bar">
       <div class="input-wrap">
-        <input type="text" id="chat-input" placeholder="Transmettre un message..." onkeydown="handleKey(event)" oninput="handleTyping()">
+        <input type="text" id="chat-input" placeholder="Envoyer un message..." onkeydown="handleKey(event)">
       </div>
     </div>
-  </div>
-
-  <!-- Members Sidebar -->
-  <div class="members">
-    <div class="members-header">MEMBRES CONNECTÉS</div>
-    <div class="members-list" id="members-list"></div>
   </div>
 </div>
 
@@ -935,274 +232,101 @@
 <audio id="snd-in" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3" preload="auto"></audio>
 
 <script>
-let currentUser = null, currentServer = null, currentChannel = null, currentDM = null, lastMsgUser = null, typingTimeout = null;
+let currentUser = null, currentChannel = null, lastMsgUser = null;
 const socket = io();
-const typingUsers = new Map();
-const dmList = new Map(); // userId → { username, avatar, pronouns, status }
 
-// Login
-function doLogin() {
-  const username = document.getElementById('login-username').value.trim();
-  const password = document.getElementById('login-password').value.trim();
-  
-  if (!username) return document.getElementById('login-error').textContent = 'Pseudo requis';
-  if (username.length < 2 || username.length > 32) return document.getElementById('login-error').textContent = 'Pseudo : 2 à 32 caractères';
-  if (!password) return document.getElementById('login-error').textContent = 'Mot de passe requis';
-  
-  fetch('/api/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.error) {
-      document.getElementById('login-error').textContent = data.error;
-    } else {
-      localStorage.setItem('nexus_token', data.token);
-      localStorage.setItem('nexus_username', username);
-      startApp(data.user);
-    }
-  })
-  .catch(() => document.getElementById('login-error').textContent = 'Erreur serveur');
+function switchTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((t, i) => t.classList.toggle('active', (i===0)===(tab==='login')));
+  document.getElementById('tab-login').style.display    = tab==='login'    ? '' : 'none';
+  document.getElementById('tab-register').style.display = tab==='register' ? '' : 'none';
+  document.getElementById('auth-error').textContent = '';
 }
 
-// Account Recovery
-function openRecoveryModal(type) {
-  const modal = document.getElementById('recovery-modal');
-  const title = document.getElementById('recovery-modal-title');
-  const desc = document.getElementById('recovery-modal-desc');
-  const label = document.getElementById('recovery-field-label');
-  const input = document.getElementById('recovery-input');
-  
-  if (type === 'password') {
-    title.textContent = 'Récupération du mot de passe';
-    desc.textContent = 'Saisis ton pseudo ou ton e-mail pour recevoir un lien de réinitialisation.';
-    label.textContent = 'Pseudo ou E-mail';
-    input.placeholder = 'ton_pseudo ou email@exemple.com';
-  } else {
-    title.textContent = 'Récupération du pseudo';
-    desc.textContent = 'Saisis ton e-mail pour recevoir ton pseudo.';
-    label.textContent = 'E-mail';
-    input.placeholder = 'email@exemple.com';
-  }
-  
-  modal.classList.add('visible');
+async function doLogin() {
+  await authRequest('/api/login', {
+    username: document.getElementById('login-user').value.trim(),
+    password: document.getElementById('login-pass').value
+  });
 }
 
-function closeRecoveryModal() {
-  document.getElementById('recovery-modal').classList.remove('visible');
-  document.getElementById('recovery-error').textContent = '';
+async function doRegister() {
+  await authRequest('/api/register', {
+    username: document.getElementById('reg-user').value.trim(),
+    password: document.getElementById('reg-pass').value,
+    pronouns: document.getElementById('reg-pronouns').value
+  });
 }
 
-function submitRecovery() {
-  const input = document.getElementById('recovery-input').value.trim();
-  if (!input) return document.getElementById('recovery-error').textContent = 'Champ requis';
-  
-  toast('Lien de récupération envoyé ! Vérifie ta boîte mail.');
-  closeRecoveryModal();
+async function authRequest(url, body) {
+  document.getElementById('auth-error').textContent = '';
+  try {
+    const res  = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+    const data = await res.json();
+    if (!res.ok) return document.getElementById('auth-error').textContent = data.error || 'Erreur inconnue';
+    localStorage.setItem('nexus_token', data.token);
+    startApp(data.user);
+  } catch { document.getElementById('auth-error').textContent = 'Impossible de joindre le serveur'; }
 }
 
-// App Initialization
+function doLogout() { localStorage.removeItem('nexus_token'); location.reload(); }
+
 async function startApp(user) {
   currentUser = user;
-  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('app').classList.add('visible');
-  document.getElementById('my-avatar').src = user.avatar;
-  document.getElementById('my-username').textContent = user.username;
-  document.getElementById('snd-in').play().catch(() => {});
-  socket.emit('auth', { token: localStorage.getItem('nexus_token') || 'temp-token' });
+  document.getElementById('my-name').textContent     = user.username;
+  document.getElementById('my-pronouns').textContent = user.pronouns;
+  document.getElementById('my-avatar').src           = user.avatar;
+  document.getElementById('snd-in').play().catch(()=>{});
+  socket.emit('auth', { token: localStorage.getItem('nexus_token') });
   await loadServers();
 }
 
-// Hub Modal
-function openHubModal() {
-  document.getElementById('hub-modal').classList.add('visible');
-}
-
-function closeHubModal() {
-  document.getElementById('hub-modal').classList.remove('visible');
-  document.getElementById('modal-error').textContent = '';
-}
-
-function switchModalTab(tab) {
-  document.querySelectorAll('.modal-tab').forEach((t, i) => t.classList.toggle('active', (i === 0) === (tab === 'create')));
-  document.getElementById('modal-create').style.display = tab === 'create' ? '' : 'none';
-  document.getElementById('modal-join').style.display = tab === 'join' ? '' : 'none';
-}
-
-async function createHub() {
-  const name = document.getElementById('hub-name').value.trim();
-  const icon = document.getElementById('hub-icon').value.trim() || null;
-  if (!name) return document.getElementById('modal-error').textContent = 'Nom requis';
-  
-  try {
-    const res = await fetch('/api/servers', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-User-Id': currentUser.id },
-      body: JSON.stringify({ name, icon })
-    });
-    const data = await res.json();
-    if (!res.ok) return document.getElementById('modal-error').textContent = data.error || 'Erreur inconnue';
-    closeHubModal();
-    await loadServers();
-    toast(`Hub créé ! Code d'invitation: ${data.inviteCode}`);
-  } catch { document.getElementById('modal-error').textContent = 'Erreur serveur'; }
-}
-
-async function joinHub() {
-  const code = document.getElementById('invite-code').value.trim().toUpperCase();
-  if (!code) return document.getElementById('modal-error').textContent = 'Code requis';
-  
-  try {
-    const res = await fetch('/api/servers/join', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-User-Id': currentUser.id },
-      body: JSON.stringify({ inviteCode: code })
-    });
-    const data = await res.json();
-    if (!res.ok) return document.getElementById('modal-error').textContent = data.error || 'Erreur inconnue';
-    closeHubModal();
-    await loadServers();
-    toast('Hub rejoint avec succès !');
-  } catch { document.getElementById('modal-error').textContent = 'Erreur serveur'; }
-}
-
-async function showInviteCode() {
-  if (!currentServer) return;
-  
-  try {
-    const res = await fetch(`/api/servers/${currentServer.id}/invites`, { headers: { 'X-User-Id': currentUser.id } });
-    const data = await res.json();
-    if (!res.ok) return toast(data.error || 'Erreur inconnue');
-    
-    if (data.length === 0) {
-      const createRes = await fetch(`/api/servers/${currentServer.id}/invites`, {
-        method: 'POST',
-        headers: { 'X-User-Id': currentUser.id }
-      });
-      const createData = await createRes.json();
-      if (!createRes.ok) return toast(createData.error || 'Erreur inconnue');
-      toast(`Code d'invitation: ${createData.code}`);
-    } else {
-      toast(`Code d'invitation: ${data[0].code}`);
-    }
-  } catch { toast('Erreur serveur'); }
-}
-
-// Servers & Channels
 async function loadServers() {
-  try {
-    const res = await fetch('/api/servers', { headers: { 'X-User-Id': currentUser.id } });
-    const servers = await res.json();
-    if (!servers.length) return;
-    
-    renderServers(servers);
-    currentServer = servers[0];
-    document.getElementById('active-server-name').textContent = currentServer.name;
-    renderChannels(currentServer.channels);
-    const firstText = currentServer.channels.find(c => c.type === 'text');
-    if (firstText) joinChannel(firstText);
-  } catch { toast('Erreur lors du chargement des hubs'); }
-}
-
-function renderServers(servers) {
-  // Only one server (NEXUS Core) in this simplified version
-  const hubItem = document.querySelector('.hubs-header span');
-  hubItem.textContent = servers[0].name;
+  const res     = await fetch('/api/servers');
+  const servers = await res.json();
+  if (!servers.length) return;
+  const srv = servers[0];
+  renderChannels(srv.channels);
+  const firstText = srv.channels.find(c => c.type === 'text');
+  if (firstText) joinChannel(firstText);
 }
 
 function renderChannels(channels) {
-  const list = document.getElementById('channels-list');
-  const texts = channels.filter(c => c.type === 'text');
+  const list   = document.getElementById('channels-list');
+  const texts  = channels.filter(c => c.type === 'text');
   const voices = channels.filter(c => c.type === 'voice');
   list.innerHTML = '';
-  
-  if (texts.length) list.innerHTML += `<div class="ch-category">ESPACES TEXTE</div>`;
+  if (texts.length)  list.innerHTML += `<div class="ch-category">Salons texte</div>`;
   texts.forEach(ch => {
     const el = document.createElement('div');
-    el.className = `ch-item ${ch.id === currentChannel?.id ? 'active' : ''}`;
-    el.innerHTML = `<span class="icon">◯</span> ${ch.name}`;
+    el.className = 'ch-item'; el.id = `ch-${ch.id}`;
+    el.innerHTML = `<span>#</span> ${ch.name}`;
     el.onclick = () => joinChannel(ch);
     list.appendChild(el);
   });
-  
-  if (voices.length) list.innerHTML += `<div class="ch-category">SCÈNES VOCALES</div>`;
+  if (voices.length) list.innerHTML += `<div class="ch-category">Salons vocaux</div>`;
   voices.forEach(ch => {
     const el = document.createElement('div');
-    el.className = 'ch-item';
-    el.innerHTML = `<span class="icon">🔊</span> ${ch.name}`;
+    el.className = 'ch-item'; el.id = `ch-${ch.id}`;
+    el.innerHTML = `<span>🔊</span> ${ch.name}`;
     el.onclick = () => toast('Audio/Vidéo bientôt disponible !');
     list.appendChild(el);
   });
 }
 
-function renderDMList() {
-  const dmsList = document.getElementById('dms-list');
-  dmsList.innerHTML = '';
-  
-  // Add Nexus Core as first DM item
-  const nexusItem = document.createElement('div');
-  nexusItem.className = `dm-item ${!currentDM ? 'active' : ''}`;
-  nexusItem.innerHTML = `<img src="https://api.dicebear.com/7.x/bottts/svg?seed=Nexus" alt="Nexus Core">`;
-  nexusItem.onclick = () => {
-    currentDM = null;
-    document.querySelectorAll('.dm-item').forEach(el => el.classList.remove('active'));
-    nexusItem.classList.add('active');
-    if (currentChannel) joinChannel(currentChannel);
-  };
-  dmsList.appendChild(nexusItem);
-  
-  // Add other DMs
-  dmList.forEach((dm, userId) => {
-    const dmItem = document.createElement('div');
-    dmItem.className = `dm-item ${currentDM?.id === userId ? 'active' : ''}`;
-    dmItem.innerHTML = `<img src="${dm.avatar}" alt="${dm.username}">`;
-    dmItem.onclick = () => startDM(userId, dm.username, dm.avatar, dm.pronouns);
-    dmItem.classList.toggle('offline', dm.status === 'offline');
-    dmsList.appendChild(dmItem);
-  });
-}
-
 function joinChannel(ch) {
-  currentChannel = ch;
-  currentDM = null;
-  lastMsgUser = null;
+  currentChannel = ch; lastMsgUser = null;
   document.getElementById('active-channel-name').textContent = ch.name;
   document.querySelectorAll('.ch-item').forEach(el => el.classList.remove('active'));
-  document.querySelector(`.ch-item:nth-child(${(ch.position || 0) + 2})`).classList.add('active');
+  const el = document.getElementById(`ch-${ch.id}`);
+  if (el) el.classList.add('active');
   document.getElementById('chat-area').innerHTML = '';
-  document.getElementById('typing-indicator').classList.remove('visible');
-  typingUsers.clear();
   socket.emit('join-channel', { channelId: ch.id });
 }
 
-function startDM(userId, username, avatar, pronouns) {
-  currentDM = { id: userId, username, avatar, pronouns };
-  currentChannel = null;
-  lastMsgUser = null;
-  document.getElementById('active-channel-name').textContent = `MP avec ${username}`;
-  document.querySelectorAll('.ch-item, .dm-item').forEach(el => el.classList.remove('active'));
-  document.querySelector(`.dm-item:nth-child(${Array.from(dmList.keys()).indexOf(userId) + 2})`).classList.add('active');
-  document.getElementById('chat-area').innerHTML = '';
-  document.getElementById('typing-indicator').classList.remove('visible');
-  typingUsers.clear();
-  
-  fetch(`/api/private-messages?otherUserId=${userId}`, { headers: { 'X-User-Id': currentUser.id } })
-    .then(res => res.json())
-    .then(messages => {
-      messages.reverse().forEach(renderMsg);
-      scrollToBottom();
-    });
-}
-
-// Socket Events
-socket.on('auth-success', (user) => {
-  currentUser = { ...currentUser, ...user };
-  console.log('✅ Socket auth', user.username);
-});
-
-socket.on('auth-error', (e) => console.error('Socket auth error:', e));
+socket.on('auth-success', u => console.log('✅ Socket auth', u.username));
+socket.on('auth-error',   e => console.error('Socket auth error:', e));
 
 socket.on('channel-history', ({ messages }) => {
   document.getElementById('chat-area').innerHTML = '';
@@ -1211,184 +335,65 @@ socket.on('channel-history', ({ messages }) => {
   scrollToBottom();
 });
 
-socket.on('new-msg', (msg) => {
-  if (currentDM) return;
-  renderMsg(msg);
-  scrollToBottom();
-});
+socket.on('new-msg', msg => { renderMsg(msg); scrollToBottom(); });
 
-socket.on('private_message', (msg) => {
-  if (msg.sender_id !== currentDM?.id && msg.receiver_id !== currentDM?.id) {
-    if (!dmList.has(msg.sender_id)) {
-      dmList.set(msg.sender_id, {
-        username: msg.sender_username,
-        avatar: msg.sender_avatar,
-        pronouns: msg.sender_pronouns,
-        status: 'online'
-      });
-      renderDMList();
-    }
-    toast(`Nouveau MP de ${msg.sender_username}`);
-    return;
-  }
-  
-  renderMsg(msg);
-  scrollToBottom();
+socket.on('user-status', ({ username, status }) => {
+  toast(`${username} est ${status === 'online' ? 'en ligne 🟢' : 'hors ligne'}`);
 });
-
-socket.on('user-status', ({ userId, status, username }) => {
-  if (userId === currentUser.id) {
-    document.getElementById('my-avatar-btn').classList.toggle('offline', status === 'offline');
-  }
-  
-  const memberEl = document.getElementById(`member-${userId}`);
-  if (memberEl) {
-    memberEl.querySelector('.member-avatar').classList.toggle('offline', status === 'offline');
-  }
-  
-  if (dmList.has(userId)) {
-    dmList.get(userId).status = status;
-    renderDMList();
-  }
-  
-  toast(`${status === 'online' ? '🟢' : '⚪'} ${username} est ${status}`);
-});
-
-socket.on('user-list-update', (users) => {
-  const membersList = document.getElementById('members-list');
-  membersList.innerHTML = '';
-  
-  users.forEach(user => {
-    if (user.id === currentUser.id) return;
-    
-    const memberEl = document.createElement('div');
-    memberEl.className = 'member-item';
-    memberEl.id = `member-${user.id}`;
-    memberEl.innerHTML = `
-      <div class="member-avatar">
-        <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(user.username)}" alt="">
-      </div>
-      <div class="member-info">
-        <div class="member-username">${escHtml(user.username)}</div>
-      </div>
-    `;
-    memberEl.onclick = () => {
-      if (!dmList.has(user.id)) {
-        dmList.set(user.id, {
-          username: user.username,
-          avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(user.username)}`,
-          pronouns: 'iel',
-          status: 'online'
-        });
-        renderDMList();
-      }
-      startDM(user.id, user.username, `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(user.username)}`, 'iel');
-    };
-    membersList.appendChild(memberEl);
-  });
-});
-
-socket.on('user-typing', ({ userId, username, pronouns }) => {
-  if (userId === currentUser.id) return;
-  typingUsers.set(userId, { username, pronouns });
-  updateTypingIndicator();
-});
-
-socket.on('user-stop-typing', ({ userId }) => {
-  typingUsers.delete(userId);
-  updateTypingIndicator();
-});
-
-// UI Helpers
-function updateTypingIndicator() {
-  const indicator = document.getElementById('typing-indicator');
-  if (typingUsers.size === 0) {
-    indicator.classList.remove('visible');
-    return;
-  }
-  const [userId, user] = typingUsers.entries().next().value;
-  document.getElementById('typing-username').textContent = user.username;
-  document.getElementById('typing-pronouns').textContent = user.pronouns;
-  document.getElementById('typing-avatar').src = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(user.username)}`;
-  indicator.classList.add('visible');
-}
 
 function renderMsg(msg) {
   const area = document.getElementById('chat-area');
-  const time = new Date(msg.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-  const bubble = document.createElement('div');
-  bubble.className = `message-bubble ${msg.sender_id === currentUser.id || msg.username === currentUser.username ? 'sent' : 'received'}`;
-  
-  if (currentDM) {
-    bubble.innerHTML = `
-      <div>
-        <span class="author">${escHtml(msg.sender_id === currentUser.id ? 'Vous' : msg.sender_username)}</span>
-        <span class="pronouns">${escHtml(msg.sender_pronouns || 'iel')}</span>
-        <time>${time}</time>
-      </div>
-      <p>${escHtml(msg.content)}</p>
-    `;
+  if (msg.username === lastMsgUser) {
+    const div = document.createElement('div');
+    div.className = 'msg-continued';
+    div.textContent = msg.content;
+    area.appendChild(div);
   } else {
-    bubble.innerHTML = `
-      <div>
-        <span class="author">${escHtml(msg.username)}</span>
-        <span class="pronouns">${escHtml(msg.pronouns)}</span>
-        <time>${time}</time>
-      </div>
-      <p>${escHtml(msg.content)}</p>
-    `;
+    const time = new Date(msg.created_at).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+    const div  = document.createElement('div');
+    div.className = 'msg-group';
+    div.innerHTML = `
+      <img class="ava" src="${msg.avatar}" alt="${escHtml(msg.username)}">
+      <div class="body">
+        <div class="meta">
+          <b>${escHtml(msg.username)}</b>
+          <span class="pronouns">${escHtml(msg.pronouns)}</span>
+          <time>${time}</time>
+        </div>
+        <p>${escHtml(msg.content)}</p>
+      </div>`;
+    area.appendChild(div);
+    lastMsgUser = msg.username;
   }
-  
-  area.appendChild(bubble);
 }
 
-function escHtml(str) { return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function escHtml(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function scrollToBottom() { const a = document.getElementById('chat-area'); a.scrollTop = a.scrollHeight; }
 
 function handleKey(e) {
   if (e.key === 'Enter' && !e.shiftKey) {
     const text = e.target.value.trim();
-    if (!text) return;
-    
-    if (currentDM) {
-      socket.emit('private_message', { receiverId: currentDM.id, content: text });
-    } else if (currentChannel) {
-      socket.emit('send-msg', { channelId: currentChannel.id, content: text });
-    }
-    
+    if (!text || !currentChannel) return;
+    socket.emit('send-msg', { channelId: currentChannel.id, content: text });
     e.target.value = '';
-    if (currentChannel) socket.emit('typing-stop', { channelId: currentChannel.id });
-  }
-}
-
-function handleTyping() {
-  if (currentChannel) {
-    socket.emit('typing-start', { channelId: currentChannel.id });
-    clearTimeout(typingTimeout);
-    typingTimeout = setTimeout(() => {
-      socket.emit('typing-stop', { channelId: currentChannel.id });
-    }, 3000);
   }
 }
 
 function toast(msg) {
   const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
+  t.textContent = msg; t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3000);
 }
 
 // Auto-login
-(() => {
-  const username = localStorage.getItem('nexus_username');
-  if (username) {
-    startApp({
-      id: 'temp-' + Date.now(),
-      username,
-      avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(username)}`,
-      pronouns: 'iel'
-    });
-  }
+(async () => {
+  const token = localStorage.getItem('nexus_token');
+  if (!token) return;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    if (payload.exp * 1000 < Date.now()) { localStorage.removeItem('nexus_token'); return; }
+    const res  = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({_token:token}) });
+  } catch {}
 })();
 </script>
 </body>
