@@ -11,12 +11,15 @@
   <style>
     :root {
       --deep-purple-bg: #0d0d1a;
+      --sidebar-bg: #12122a;
+      --chat-bg: #0f0f1e;
+      --user-bar-bg: #0a0a14; /* Also for server list background */
       --card-bg: rgba(30, 20, 60, 0.85);
       --border-neon: rgba(167, 139, 250, 0.3);
       --neon-primary: #7c3aed; /* Violet principal */
       --neon-secondary: #a855f7; /* Violet secondaire */
       --neon-accent: #e879f9; /* Rose/violet accent */
-      --text-light: #dbdee1;
+      --text-light: #e2e8f0; /* Updated from #dbdee1 */
       --text-muted: #949ba4;
       --status-online: #23a55a;
       --status-offline: #949ba4;
@@ -25,6 +28,8 @@
       --radius-lg: 20px;
       --shadow-glow: 0 0 20px rgba(167,139,250,.8), 0 0 40px rgba(110,87,255,.5);
       --shadow-card: 0 0 60px rgba(110, 87, 255, 0.2), 0 24px 64px rgba(0,0,0,.6);
+      --shadow-active-channel: 0 0 10px var(--neon-primary);
+      --message-bubble-bg: rgba(124, 58, 237, 0.15); /* A light primary violet tint */
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -82,207 +87,240 @@
 
     .auth-field { margin-bottom: 16px; }
     .auth-field label {
-      display: block; font-size: .75rem; font-weight: 700; text-transform: uppercase;
-      letter-spacing: .05em; color: var(--text-muted); margin-bottom: 6px;
+      display: block; font-size: .85rem; color: var(--text-muted); margin-bottom: 8px;
     }
-    .auth-field input {
-      width: 100%; padding: 12px 14px;
-      background: #1e1e2e; border: 1.5px solid rgba(110,87,255,.3);
-      border-radius: var(--radius-sm); color: var(--text-light);
-      font-family: inherit; font-size: .95rem; outline: none; transition: border-color .2s;
+    .auth-field input, .auth-field select {
+      width: 100%; padding: 12px 16px; border: 1px solid var(--border-neon);
+      border-radius: var(--radius-sm); background: rgba(255,255,255,.05);
+      color: var(--text-light); font-size: 1rem;
+      transition: border-color .2s ease, box-shadow .2s ease;
     }
-    .auth-field input:focus { border-color: var(--neon-primary); box-shadow: 0 0 8px rgba(124, 58, 237, 0.5); }
-    .auth-field input::placeholder { color: var(--text-muted); }
-
-    .pronouns-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 24px;
-    }
-    .pronoun-badge {
-      padding: 8px 12px; background: rgba(255,255,255,.05); border-radius: var(--radius-sm);
-      text-align: center; cursor: pointer; font-size: .85rem; font-weight: 500;
-      color: var(--text-muted); transition: .2s ease; border: 1px solid transparent;
-    }
-    .pronoun-badge.selected {
-      background: var(--neon-primary); color: #fff; border-color: var(--neon-secondary);
+    .auth-field input:focus, .auth-field select:focus {
+      outline: none; border-color: var(--neon-primary);
       box-shadow: 0 0 10px var(--neon-primary);
     }
-
-    .auth-button {
-      width: 100%; padding: 14px; background: var(--neon-primary); color: #fff;
-      border: none; border-radius: var(--radius-sm); font-size: 1rem; font-weight: 700;
-      cursor: pointer; transition: .2s ease; letter-spacing: .02em;
-      box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
+    .auth-submit-btn {
+      width: 100%; padding: 14px; background: var(--neon-primary);
+      color: #fff; border: none; border-radius: var(--radius-sm);
+      font-size: 1.1rem; font-weight: 700; cursor: pointer;
+      transition: background .2s ease, box-shadow .2s ease;
+      box-shadow: 0 0 15px rgba(124, 58, 237, 0.5);
     }
-    .auth-button:hover { background: var(--neon-secondary); box-shadow: 0 6px 25px rgba(168, 85, 247, 0.5); }
+    .auth-submit-btn:hover {
+      background: var(--neon-secondary);
+      box-shadow: 0 0 20px var(--neon-secondary);
+    }
+    .auth-panel.hidden { display: none; }
 
-    .auth-error { color: var(--red); font-size: .85rem; text-align: center; margin-top: 16px; }
-
-    /* ── Main App Layout ────���─────────────────────────────────────── */
+    /* ── Main App Layout ──────────────────────────────────────────── */
     #app {
-      display: none; /* Hidden by default, shown after auth */
-      grid-template-columns: 70px 240px 1fr 280px; /* Hubs | Channels | Chat | Members */
-      height: 100vh;
+      display: flex; height: 100vh; width: 100vw;
       background: var(--deep-purple-bg);
     }
+    #app.hidden { display: none; }
 
-    /* Hubs Sidebar */
-    #hubs-sidebar {
-      background: #1a1a2e; /* Darker background for hubs */
-      padding: 10px 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+    /* Server Sidebar */
+    #server-sidebar {
+      width: 72px; flex-shrink: 0;
+      background: var(--user-bar-bg); /* Darker background for server list */
+      padding: 12px 0;
+      display: flex; flex-direction: column; align-items: center;
       gap: 10px;
-      border-right: 1px solid rgba(255,255,255,0.05);
-    }
-    .hub-icon {
-      width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,.08);
-      display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
-      color: var(--text-muted); cursor: pointer; transition: .2s ease;
-      position: relative;
-    }
-    .hub-icon:hover { background: var(--neon-primary); color: #fff; }
-    .hub-icon.active {
-      background: var(--neon-primary); color: #fff;
-      box-shadow: 0 0 15px var(--neon-primary);
-      border-radius: 30%; /* Slight change for active */
-    }
-    .hub-icon img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
-
-    /* Channels Sidebar */
-    #channels-sidebar {
-      background: #1e1e38; /* Slightly lighter than hubs */
-      display: flex; flex-direction: column;
-      border-right: 1px solid rgba(255,255,255,0.05);
-    }
-    .server-header {
-      padding: 15px 20px; font-size: 1.1rem; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.05);
-      color: var(--text-light);
-    }
-    .channel-list {
-      flex-grow: 1; overflow-y: auto; padding: 10px 0;
-    }
-    .channel-category {
-      font-size: .8rem; color: var(--text-muted); text-transform: uppercase; padding: 10px 20px 5px;
-      font-weight: 700; letter-spacing: .05em;
-    }
-    .channel-item {
-      display: flex; align-items: center; padding: 8px 20px; cursor: pointer;
-      color: var(--text-muted); transition: .2s ease;
-    }
-    .channel-item:hover { background: rgba(255,255,255,.05); color: var(--text-light); }
-    .channel-item.active {
-      background: var(--neon-primary); color: #fff; border-radius: var(--radius-sm);
-      margin: 0 10px; padding: 8px 10px;
-      box-shadow: 0 0 10px rgba(124, 58, 237, 0.4);
-    }
-    .channel-item svg { margin-right: 8px; }
-
-    /* User Bar */
-    #user-bar {
-      display: flex; align-items: center; padding: 10px 15px; background: #1a1a2e;
-      border-top: 1px solid rgba(255,255,255,0.05);
-    }
-    #user-avatar {
-      width: 40px; height: 40px; border-radius: 50%; object-fit: cover; margin-right: 10px;
-      border: 2px solid var(--neon-secondary);
-    }
-    #user-info strong { display: block; font-size: .95rem; color: var(--text-light); }
-    #user-info span { font-size: .75rem; color: var(--text-muted); }
-    #logout-button {
-      margin-left: auto; background: none; border: none; color: var(--text-muted);
-      font-size: 1.2rem; cursor: pointer; transition: .2s ease;
-    }
-    #logout-button:hover { color: var(--red); transform: scale(1.1); }
-
-    /* Chat Area */
-    #chat-area {
-      display: flex; flex-direction: column;
-      background: #222240; /* Main chat background */
-    }
-    .chat-header {
-      padding: 15px 20px; font-size: 1.1rem; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.05);
-      color: var(--text-light);
-      display: flex; align-items: center;
-    }
-    .chat-header svg { margin-right: 10px; color: var(--text-muted); }
-    #messages-list {
-      flex-grow: 1; overflow-y: auto; padding: 20px;
-      display: flex; flex-direction: column-reverse; /* New messages at bottom */
-    }
-    .message-item {
-      display: flex; margin-bottom: 15px;
-    }
-    .message-avatar {
-      width: 40px; height: 40px; border-radius: 50%; object-fit: cover; margin-right: 12px;
-    }
-    .message-content-wrapper {
-      flex-grow: 1;
-    }
-    .message-author-info {
-      display: flex; align-items: baseline; margin-bottom: 4px;
-    }
-    .message-author {
-      font-weight: 700; color: var(--neon-accent); margin-right: 8px;
-    }
-    .message-pronouns { font-size: .75rem; color: var(--text-muted); margin-right: 8px; }
-    .message-timestamp { font-size: .75rem; color: var(--text-muted); }
-    .message-text { font-size: .95rem; line-height: 1.4; }
-
-    #message-input-area {
-      padding: 15px 20px; border-top: 1px solid rgba(255,255,255,0.05);
-      background: #1e1e38;
-    }
-    #message-input {
-      width: 100%; padding: 12px 15px; background: #2b2d31; border: 1px solid rgba(167,139,250,.2);
-      border-radius: var(--radius-sm); color: var(--text-light); font-family: inherit;
-      font-size: .95rem; outline: none; transition: border-color .2s;
-    }
-    #message-input:focus { border-color: var(--neon-secondary); box-shadow: 0 0 8px rgba(168, 85, 247, 0.4); }
-    #message-input::placeholder { color: var(--text-muted); }
-
-    /* Members Sidebar */
-    #members-sidebar {
-      background: #1e1e38;
-      display: flex; flex-direction: column;
-      border-left: 1px solid rgba(255,255,255,0.05);
-    }
-    .sidebar-section-header {
-      padding: 15px 20px; font-size: .9rem; font-weight: 700; text-transform: uppercase;
-      color: var(--text-muted); letter-spacing: .05em;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-    }
-    .members-list, .dm-list {
-      padding: 10px 0;
       overflow-y: auto;
     }
-    .member-item, .dm-item {
-      display: flex; align-items: center; padding: 8px 15px; cursor: pointer;
-      transition: .2s ease; border-radius: var(--radius-sm); margin: 0 10px;
+    #server-list {
+      display: flex; flex-direction: column; gap: 8px;
+      width: 100%;
     }
-    .member-item:hover, .dm-item:hover { background: rgba(255,255,255,.05); }
-    .member-item.active, .dm-item.active {
+    .server-item {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: rgba(255,255,255,.05); color: var(--text-light);
+      display: flex; justify-content: center; align-items: center;
+      font-weight: 700; font-size: .8rem; cursor: pointer;
+      transition: border-radius .2s ease, background .2s ease, box-shadow .2s ease;
+      margin: 0 auto;
+      border: 2px solid transparent;
+    }
+    .server-item:hover {
+      border-radius: 30%;
+      background: var(--neon-primary);
+      box-shadow: 0 0 15px var(--neon-primary);
+    }
+    .server-item.active {
+      border-radius: 30%;
+      background: var(--neon-primary);
+      box-shadow: 0 0 20px var(--neon-primary);
+      border-color: var(--neon-accent);
+    }
+
+    /* Channel Sidebar */
+    #channel-sidebar {
+      width: 240px; flex-shrink: 0;
+      background: var(--sidebar-bg);
+      display: flex; flex-direction: column;
+      border-right: 1px solid rgba(255,255,255,.05);
+    }
+    #channel-header {
+      padding: 16px;
+      border-bottom: 1px solid rgba(255,255,255,.05);
+      color: var(--text-light);
+      font-size: 1.1rem; font-weight: 700;
+    }
+    #channel-list {
+      flex-grow: 1; overflow-y: auto;
+      padding: 12px 8px;
+    }
+    .channel-category {
+      color: var(--text-muted); font-size: .75rem; font-weight: 700;
+      text-transform: uppercase; margin: 16px 8px 8px;
+    }
+    .channel-item {
+      padding: 8px 12px; margin-bottom: 4px;
+      color: var(--text-muted); font-size: .95rem;
+      border-radius: var(--radius-sm); cursor: pointer;
+      transition: background .2s ease, color .2s ease, box-shadow .2s ease;
+    }
+    .channel-item:hover {
+      background: rgba(255,255,255,.08);
+      color: var(--text-light);
+    }
+    .channel-item.active {
+      background: var(--neon-primary);
+      color: #fff;
+      box-shadow: var(--shadow-active-channel);
+    }
+
+    /* User Panel */
+    #user-panel {
+      background: var(--user-bar-bg);
+      padding: 12px 16px;
+      display: flex; justify-content: space-between; align-items: center;
+      border-top: 1px solid rgba(255,255,255,.05);
+    }
+    .user-info {
+      display: flex; align-items: center;
+    }
+    .user-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      margin-right: 10px; background: var(--neon-secondary);
+    }
+    .username {
+      font-weight: 700; color: var(--text-light);
+    }
+    .user-actions button {
+      background: none; border: none; color: var(--text-muted);
+      font-size: 1.2rem; cursor: pointer; margin-left: 8px;
+      transition: color .2s ease;
+    }
+    .user-actions button:hover {
+      color: var(--neon-primary);
+    }
+
+    /* Main Chat Area */
+    #main-chat {
+      flex-grow: 1; display: flex; flex-direction: column;
+      background: var(--chat-bg);
+    }
+    #chat-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid rgba(255,255,255,.05);
+      display: flex; align-items: center;
+      color: var(--text-light);
+    }
+    #chat-header h3 {
+      font-size: 1.2rem; font-weight: 700; margin-right: 12px;
+    }
+    #chat-header .online-users {
+      font-size: .85rem; color: var(--text-muted);
+    }
+
+    #message-list {
+      flex-grow: 1; overflow-y: auto;
+      padding: 20px 24px;
+    }
+    .message {
+      display: flex; margin-bottom: 16px;
+      align-items: flex-start;
+    }
+    .message-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      margin-right: 12px; flex-shrink: 0;
+      background: var(--neon-accent);
+    }
+    .message-content {
+      flex-grow: 1;
+    }
+    .message-author {
+      font-weight: 700; color: var(--text-light); margin-bottom: 4px;
+      display: flex; align-items: baseline;
+    }
+    .message-timestamp {
+      font-size: .75rem; color: var(--text-muted); margin-left: 8px;
+      font-weight: 400;
+    }
+    .message-text {
+      background: var(--message-bubble-bg);
+      padding: 10px 14px; border-radius: var(--radius-md);
+      color: var(--text-light); line-height: 1.4;
+      max-width: 70%; /* Limit bubble width */
+      word-wrap: break-word;
+    }
+    .message.self .message-text {
+      background: rgba(168, 85, 247, 0.2); /* Slightly different tint for self messages */
+      margin-left: auto; /* Align self messages to the right */
+    }
+    .message.self {
+      flex-direction: row-reverse; /* Reverse order for self messages */
+    }
+    .message.self .message-avatar {
+      margin-left: 12px; margin-right: 0;
+    }
+    .message.self .message-author {
+      justify-content: flex-end;
+    }
+    .message.self .message-timestamp {
+      margin-left: 0; margin-right: 8px;
+    }
+
+    /* Chat Input Area */
+    #chat-input-area {
+      padding: 16px 24px;
+      border-top: 1px solid rgba(255,255,255,.05);
+      display: flex; gap: 12px;
+    }
+    #chat-input {
+      flex-grow: 1; padding: 12px 16px;
+      border: 1px solid var(--border-neon);
+      border-radius: var(--radius-md);
+      background: rgba(255,255,255,.05);
+      color: var(--text-light); font-size: 1rem;
+      transition: border-color .2s ease, box-shadow .2s ease;
+    }
+    #chat-input::placeholder {
+      color: var(--text-muted);
+    }
+    #chat-input:focus {
+      outline: none; border-color: var(--neon-primary);
+      box-shadow: 0 0 15px var(--neon-primary);
+    }
+    #send-message-btn {
       background: var(--neon-primary); color: #fff;
-      box-shadow: 0 0 10px rgba(124, 58, 237, 0.4);
+      border: none; border-radius: var(--radius-md);
+      padding: 12px 20px; font-size: 1rem; font-weight: 700;
+      cursor: pointer; transition: background .2s ease, box-shadow .2s ease;
+      box-shadow: 0 0 10px rgba(124, 58, 237, 0.5);
     }
-    .member-avatar, .dm-avatar {
-      width: 32px; height: 32px; border-radius: 50%; object-fit: cover; margin-right: 10px;
-      position: relative;
+    #send-message-btn:hover {
+      background: var(--neon-secondary);
+      box-shadow: 0 0 15px var(--neon-secondary);
     }
-    .status-dot {
-      width: 10px; height: 10px; border-radius: 50%; background: var(--status-offline);
-      position: absolute; bottom: 0; right: 0; border: 2px solid #1e1e38;
-    }
-    .status-dot.online { background: var(--status-online); }
-    .member-name, .dm-name { font-weight: 500; color: var(--text-light); }
-    .member-pronouns { font-size: .75rem; color: var(--text-muted); margin-left: 5px; }
 
     /* Scrollbar Styling */
     ::-webkit-scrollbar {
       width: 8px;
     }
     ::-webkit-scrollbar-track {
-      background: #1a1a2e;
+      background: var(--deep-purple-bg);
     }
     ::-webkit-scrollbar-thumb {
       background: var(--neon-primary);
@@ -295,142 +333,111 @@
 </head>
 <body>
 
-  <!-- Auth Overlay -->
   <div id="auth-overlay">
     <div class="auth-card">
       <h1 class="auth-logo">NEXUS</h1>
-      <p class="auth-sub">Connectez-vous ou inscrivez-vous pour rejoindre la conversation.</p>
+      <p class="auth-sub">Connectez-vous ou créez un compte pour rejoindre la communauté.</p>
 
       <div class="auth-tabs">
-        <div class="auth-tab active" id="login-tab">Connexion</div>
-        <div class="auth-tab" id="register-tab">Inscription</div>
+        <div id="login-tab" class="auth-tab active">Connexion</div>
+        <div id="register-tab" class="auth-tab">Inscription</div>
       </div>
 
-      <!-- Login Form -->
-      <form id="login-form">
-        <div class="auth-field">
-          <label for="login-username">Pseudo</label>
-          <input type="text" id="login-username" placeholder="Votre pseudo" required>
-        </div>
-        <div class="auth-field">
-          <label for="login-password">Mot de passe</label>
-          <input type="password" id="login-password" placeholder="Votre mot de passe" required>
-        </div>
-        <button type="submit" class="auth-button">Se connecter</button>
-        <p class="auth-error" id="login-error"></p>
-      </form>
-
-      <!-- Register Form -->
-      <form id="register-form" style="display: none;">
-        <div class="auth-field">
-          <label for="register-username">Pseudo</label>
-          <input type="text" id="register-username" placeholder="Choisissez un pseudo" required>
-        </div>
-        <div class="auth-field">
-          <label for="register-password">Mot de passe</label>
-          <input type="password" id="register-password" placeholder="Créez un mot de passe" required>
-        </div>
-        <div class="auth-field">
-          <label>Pronoms</label>
-          <div class="pronouns-grid" id="pronouns-selection">
-            <div class="pronoun-badge" data-pronouns="iel">iel</div>
-            <div class="pronoun-badge" data-pronouns="il">il</div>
-            <div class="pronoun-badge" data-pronouns="elle">elle</div>
-            <div class="pronoun-badge" data-pronouns="on">on</div>
-            <div class="pronoun-badge" data-pronouns="iel/elle">iel/elle</div>
-            <div class="pronoun-badge" data-pronouns="iel/il">iel/il</div>
+      <div id="login-panel" class="auth-panel">
+        <form id="login-form">
+          <div class="auth-field">
+            <label for="login-username">Pseudo</label>
+            <input type="text" id="login-username" name="username" required>
           </div>
-          <input type="hidden" id="register-pronouns" value="iel"> <!-- Default value -->
-        </div>
-        <button type="submit" class="auth-button">S'inscrire</button>
-        <p class="auth-error" id="register-error"></p>
-      </form>
+          <div class="auth-field">
+            <label for="login-password">Mot de passe</label>
+            <input type="password" id="login-password" name="password" required>
+          </div>
+          <button type="submit" class="auth-submit-btn">Se connecter</button>
+        </form>
+      </div>
+
+      <div id="register-panel" class="auth-panel hidden">
+        <form id="register-form">
+          <div class="auth-field">
+            <label for="register-username">Pseudo</label>
+            <input type="text" id="register-username" name="username" required>
+          </div>
+          <div class="auth-field">
+            <label for="register-password">Mot de passe</label>
+            <input type="password" id="register-password" name="password" required>
+          </div>
+          <div class="auth-field">
+            <label for="register-pronouns">Pronoms (optionnel)</label>
+            <select id="register-pronouns" name="pronouns">
+              <option value="iel">iel</option>
+              <option value="il">il</option>
+              <option value="elle">elle</option>
+              <option value="autre">Autre</option>
+            </select>
+          </div>
+          <button type="submit" class="auth-submit-btn">S'inscrire</button>
+        </form>
+      </div>
     </div>
   </div>
 
-  <!-- Main App Interface -->
-  <div id="app">
-    <!-- Hubs Sidebar -->
-    <div id="hubs-sidebar">
-      <div class="hub-icon active" data-server-id="1">
-        <img src="https://api.dicebear.com/7.x/bottts/svg?seed=NEXUS" alt="NEXUS Hub">
-      </div>
-      <!-- Other hubs would go here -->
-      <div class="hub-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+  <div id="app" class="hidden">
+    <div id="server-sidebar">
+      <div id="server-list">
+        <div class="server-item active">NEXUS</div>
+        <div class="server-item">S2</div>
+        <div class="server-item">S3</div>
       </div>
     </div>
-
-    <!-- Channels Sidebar -->
-    <div id="channels-sidebar">
-      <div class="server-header">NEXUS Core</div>
-      <div class="channel-list">
-        <div class="channel-category">Canaux Texte</div>
-        <!-- Channels will be dynamically loaded here -->
-        <div class="channel-item active" data-channel-id="1">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-hash"><line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/><line x1="10" x2="8" y1="3" y2="21"/><line x1="16" x2="14" y1="3" y2="21"/></svg>
-          <span>général</span>
-        </div>
-        <div class="channel-item" data-channel-id="2">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-hash"><line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/><line x1="10" x2="8" y1="3" y2="21"/><line x1="16" x2="14" y1="3" y2="21"/></svg>
-          <span>annonces</span>
-        </div>
-        <div class="channel-category">Canaux Vocaux</div>
-        <div class="channel-item" data-channel-id="3">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-volume-2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M23.31 1.69a16 16 0 0 1 0 22.62"/></svg>
-          <span>Général Vocal</span>
-        </div>
+    <div id="channel-sidebar">
+      <div id="channel-header">
+        <h2>NEXUS Core</h2>
       </div>
-      <div id="user-bar">
-        <img id="user-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=User" alt="User Avatar">
-        <div id="user-info">
-          <strong id="current-username">Chargement...</strong>
-          <span id="current-pronouns"></span>
+      <div id="channel-list">
+        <div class="channel-category">Text Channels</div>
+        <div class="channel-item active" data-channel-id="1"># general</div>
+        <div class="channel-item" data-channel-id="2"># random</div>
+        <div class="channel-item" data-channel-id="3"># dev</div>
+        <div class="channel-category">Voice Channels</div>
+        <div class="channel-item" data-channel-id="4">🔊 General Voice</div>
+      </div>
+      <div id="user-panel">
+        <div class="user-info">
+          <img src="https://api.dicebear.com/7.x/bottts/svg?seed=User" alt="User Avatar" class="user-avatar">
+          <span class="username">User</span>
         </div>
-        <button id="logout-button" title="Déconnexion">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-log-out"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
-        </button>
+        <div class="user-actions">
+          <button class="settings-btn">⚙️</button>
+          <button class="logout-btn">🚪</button>
+        </div>
       </div>
     </div>
-
-    <!-- Chat Area -->
-    <div id="chat-area">
-      <div class="chat-header">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-hash"><line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/><line x1="10" x2="8" y1="3" y2="21"/><line x1="16" x2="14" y1="3" y2="21"/></svg>
-        <span id="current-channel-name">général</span>
+    <div id="main-chat">
+      <div id="chat-header">
+        <h3># general</h3>
+        <span class="online-users">2 online</span>
       </div>
-      <div id="messages-list">
-        <!-- Messages will be dynamically loaded here -->
-      </div>
-      <div id="message-input-area">
-        <input type="text" id="message-input" placeholder="Envoyer un message dans #général">
-      </div>
-    </div>
-
-    <!-- Members Sidebar -->
-    <div id="members-sidebar">
-      <div class="sidebar-section-header">Messages Directs</div>
-      <div class="dm-list" id="dm-list">
-        <!-- DM items will be dynamically loaded here (e.g., recent DMs or a way to start one) -->
-        <div class="dm-item" data-user-id="1">
-          <div class="dm-avatar">
-            <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Alice" alt="DM Avatar">
-            <span class="status-dot online"></span>
+      <div id="message-list">
+        <!-- Example messages -->
+        <div class="message">
+          <img class="message-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=Alice" alt="Alice">
+          <div class="message-content">
+            <div class="message-author">Alice <span class="message-timestamp">10:30 AM</span></div>
+            <div class="message-text">Hello everyone!</div>
           </div>
-          <span class="dm-name">Alice</span>
         </div>
-        <div class="dm-item" data-user-id="2">
-          <div class="dm-avatar">
-            <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Bob" alt="DM Avatar">
-            <span class="status-dot offline"></span>
+        <div class="message self">
+          <img class="message-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=User" alt="User">
+          <div class="message-content">
+            <div class="message-author">User <span class="message-timestamp">10:31 AM</span></div>
+            <div class="message-text">Hi Alice! Welcome to NEXUS.</div>
           </div>
-          <span class="dm-name">Bob</span>
         </div>
       </div>
-
-      <div class="sidebar-section-header">Membres</div>
-      <div class="members-list" id="members-list">
-        <!-- Members will be dynamically loaded here -->
+      <div id="chat-input-area">
+        <input type="text" id="chat-input" placeholder="Message #general">
+        <button id="send-message-btn">Send</button>
       </div>
     </div>
   </div>
@@ -438,71 +445,184 @@
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       const socket = io();
-      let currentUserId = null;
-      let currentChannelId = 1; // Default to general channel
-      let currentChannelName = 'général';
-      let currentServerId = 1; // Default to NEXUS Core server
 
-      // --- Auth Elements ---
+      // Auth elements
       const authOverlay = document.getElementById('auth-overlay');
-      const appInterface = document.getElementById('app');
-      const loginTab = document.getElementById('login-tab');
-      const registerTab = document.getElementById('register-tab');
       const loginForm = document.getElementById('login-form');
       const registerForm = document.getElementById('register-form');
-      const loginError = document.getElementById('login-error');
-      const registerError = document.getElementById('register-error');
-      const pronounsSelection = document.getElementById('pronouns-selection');
-      const registerPronounsInput = document.getElementById('register-pronouns');
+      const loginTab = document.getElementById('login-tab');
+      const registerTab = document.getElementById('register-tab');
+      const loginPanel = document.getElementById('login-panel');
+      const registerPanel = document.getElementById('register-panel');
 
-      // --- App Elements ---
-      const userAvatar = document.getElementById('user-avatar');
-      const currentUsername = document.getElementById('current-username');
-      const currentPronouns = document.getElementById('current-pronouns');
-      const logoutButton = document.getElementById('logout-button');
-      const channelListDiv = document.querySelector('#channels-sidebar .channel-list');
-      const chatHeaderChannelName = document.getElementById('current-channel-name');
-      const messagesList = document.getElementById('messages-list');
-      const messageInput = document.getElementById('message-input');
-      const membersListDiv = document.getElementById('members-list');
-      const dmListDiv = document.getElementById('dm-list');
+      // App elements
+      const appContainer = document.getElementById('app');
+      const channelListContainer = document.getElementById('channel-list'); // Renamed to avoid conflict with channelList variable
+      const messageList = document.getElementById('message-list');
+      const chatInput = document.getElementById('chat-input');
+      const sendMessageBtn = document.getElementById('send-message-btn');
+      const chatHeader = document.getElementById('chat-header');
+      const currentChannelNameDisplay = chatHeader.querySelector('h3');
+      const userPanelUsername = document.querySelector('#user-panel .username');
+      const userPanelAvatar = document.querySelector('#user-panel .user-avatar');
+
+      let currentChannelId = null;
+      let currentUser = null;
+      let token = localStorage.getItem('nexus_token');
 
       // --- Auth Logic ---
-      loginTab.addEventListener('click', () => {
-        loginTab.classList.add('active');
-        registerTab.classList.remove('active');
-        loginForm.style.display = 'block';
-        registerForm.style.display = 'none';
-        loginError.textContent = '';
-        registerError.textContent = '';
-      });
+      function showAuth() {
+        authOverlay.classList.remove('hidden');
+        appContainer.classList.add('hidden');
+      }
 
-      registerTab.addEventListener('click', () => {
-        registerTab.classList.add('active');
-        loginTab.classList.remove('active');
-        registerForm.style.display = 'block';
-        loginForm.style.display = 'none';
-        loginError.textContent = '';
-        registerError.textContent = '';
-      });
+      function hideAuth() {
+        authOverlay.classList.add('hidden');
+        appContainer.classList.remove('hidden');
+      }
 
-      pronounsSelection.addEventListener('click', (event) => {
-        const target = event.target;
-        if (target.classList.contains('pronoun-badge')) {
-          document.querySelectorAll('.pronoun-badge').forEach(badge => badge.classList.remove('selected'));
-          target.classList.add('selected');
-          registerPronounsInput.value = target.dataset.pronouns;
+      if (token) {
+        socket.emit('authenticate', token);
+      } else {
+        showAuth();
+      }
+
+      // --- Socket.io Logic ---
+      socket.on('connect', () => {
+        console.log('Connected to Socket.io');
+        if (token) {
+          socket.emit('authenticate', token);
         }
       });
-      // Set default pronoun selection
-      document.querySelector('.pronoun-badge[data-pronouns="iel"]').classList.add('selected');
 
+      socket.on('authenticated', (user) => {
+        currentUser = user;
+        hideAuth();
+        if (userPanelUsername) userPanelUsername.textContent = user.username;
+        if (userPanelAvatar) userPanelAvatar.src = user.avatar;
+        socket.emit('get_servers');
+      });
+
+      socket.on('unauthorized', () => {
+        console.log('Unauthorized, clearing token');
+        localStorage.removeItem('nexus_token');
+        showAuth();
+      });
+
+      socket.on('servers_list', (servers) => {
+        // This is a placeholder. In a real app, this would populate #server-list and #channel-list
+        // For now, we'll just auto-join the first channel of the first server if available.
+        const serverListDiv = document.getElementById('server-list');
+        serverListDiv.innerHTML = '';
+        if (servers.length > 0) {
+          servers.forEach(server => {
+            const serverItem = document.createElement('div');
+            serverItem.classList.add('server-item');
+            serverItem.textContent = server.name.substring(0, 2).toUpperCase(); // Display first two letters
+            serverItem.dataset.serverId = server.id;
+            serverItem.addEventListener('click', () => {
+              // Logic to load channels for this server
+              socket.emit('get_channels', server.id);
+              document.querySelectorAll('.server-item').forEach(item => item.classList.remove('active'));
+              serverItem.classList.add('active');
+              currentChannelNameDisplay.textContent = 'Select a channel';
+              messageList.innerHTML = '';
+            });
+            serverListDiv.appendChild(serverItem);
+          });
+          // Auto-select first server and load its channels
+          if (serverListDiv.firstElementChild) {
+            serverListDiv.firstElementChild.classList.add('active');
+            socket.emit('get_channels', servers[0].id);
+          }
+        }
+      });
+
+      socket.on('channels_list', (channels) => {
+        const channelListDiv = document.getElementById('channel-list');
+        channelListDiv.innerHTML = '<div class="channel-category">Text Channels</div>'; // Clear and add category
+        if (channels.length > 0) {
+          channels.forEach(channel => {
+            const channelItem = document.createElement('div');
+            channelItem.classList.add('channel-item');
+            channelItem.textContent = `# ${channel.name}`;
+            channelItem.dataset.channelId = channel.id;
+            channelItem.addEventListener('click', () => {
+              joinChannel(channel.id, channel.name);
+            });
+            channelListDiv.appendChild(channelItem);
+          });
+          // Auto-join first channel if available
+          joinChannel(channels[0].id, channels[0].name);
+        }
+      });
+
+      socket.on('channel_history', (messages) => {
+        messageList.innerHTML = ''; // Clear previous messages
+        messages.forEach(addMessageToChat);
+        messageList.scrollTop = messageList.scrollHeight;
+      });
+
+      socket.on('new_message', (message) => {
+        if (message.channel_id === currentChannelId) {
+          addMessageToChat(message);
+          messageList.scrollTop = messageList.scrollHeight;
+        }
+      });
+
+      function joinChannel(channelId, channelName) {
+        if (currentChannelId) {
+          socket.emit('leave_channel', currentChannelId);
+        }
+        currentChannelId = channelId;
+        socket.emit('join_channel', channelId);
+        currentChannelNameDisplay.textContent = `# ${channelName}`;
+        chatInput.placeholder = `Message #${channelName}`;
+        // Update active channel in UI
+        document.querySelectorAll('.channel-item').forEach(item => {
+          item.classList.remove('active');
+          if (item.dataset.channelId == channelId) {
+            item.classList.add('active');
+          }
+        });
+      }
+
+      function addMessageToChat(message) {
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message');
+        if (currentUser && message.user_id === currentUser.id) {
+          messageDiv.classList.add('self');
+        }
+        const timestamp = new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        messageDiv.innerHTML = `
+          <img class="message-avatar" src="${message.avatar}" alt="${message.username}">
+          <div class="message-content">
+            <div class="message-author">${message.username} <span class="message-timestamp">${timestamp}</span></div>
+            <div class="message-text">${message.content}</div>
+          </div>
+        `;
+        messageList.appendChild(messageDiv);
+      }
+
+      sendMessageBtn.addEventListener('click', () => {
+        const content = chatInput.value.trim();
+        if (content && currentChannelId) {
+          socket.emit('send_message', { channel_id: currentChannelId, content: content });
+          chatInput.value = '';
+        }
+      });
+
+      chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          sendMessageBtn.click();
+        }
+      });
+
+      // Dummy login/register forms (to make the auth overlay functional)
       loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        loginError.textContent = '';
-        const username = document.getElementById('login-username').value;
-        const password = document.getElementById('login-password').value;
-
+        const username = loginForm.querySelector('#login-username').value;
+        const password = loginForm.querySelector('#login-password').value;
         try {
           const res = await fetch('/api/login', {
             method: 'POST',
@@ -510,28 +630,24 @@
             body: JSON.stringify({ username, password })
           });
           const data = await res.json();
-
           if (res.ok) {
-            localStorage.setItem('token', data.token);
-            authOverlay.classList.add('hidden');
-            appInterface.style.display = 'grid';
-            socket.emit('auth', { token: data.token });
+            localStorage.setItem('nexus_token', data.token);
+            token = data.token;
+            socket.emit('authenticate', token);
           } else {
-            loginError.textContent = data.error || 'Erreur de connexion.';
+            alert(data.error);
           }
         } catch (error) {
           console.error('Login error:', error);
-          loginError.textContent = 'Erreur réseau ou serveur.';
+          alert('Login failed');
         }
       });
 
       registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        registerError.textContent = '';
-        const username = document.getElementById('register-username').value;
-        const password = document.getElementById('register-password').value;
-        const pronouns = registerPronounsInput.value;
-
+        const username = registerForm.querySelector('#register-username').value;
+        const password = registerForm.querySelector('#register-password').value;
+        const pronouns = registerForm.querySelector('#register-pronouns').value;
         try {
           const res = await fetch('/api/register', {
             method: 'POST',
@@ -539,259 +655,47 @@
             body: JSON.stringify({ username, password, pronouns })
           });
           const data = await res.json();
-
           if (res.ok) {
-            localStorage.setItem('token', data.token);
-            authOverlay.classList.add('hidden');
-            appInterface.style.display = 'grid';
-            socket.emit('auth', { token: data.token });
+            localStorage.setItem('nexus_token', data.token);
+            token = data.token;
+            socket.emit('authenticate', token);
           } else {
-            registerError.textContent = data.error || 'Erreur d\'inscription.';
+            alert(data.error);
           }
         } catch (error) {
           console.error('Register error:', error);
-          registerError.textContent = 'Erreur réseau ou serveur.';
+          alert('Registration failed');
         }
       });
 
-      logoutButton.addEventListener('click', () => {
-        localStorage.removeItem('token');
-        authOverlay.classList.remove('hidden');
-        appInterface.style.display = 'none';
-        // Optionally, disconnect socket or emit logout event
-        socket.disconnect();
-        socket.connect(); // Reconnect to get a fresh state if needed
-        // Clear UI elements
-        messagesList.innerHTML = '';
-        membersListDiv.innerHTML = '';
-        channelListDiv.innerHTML = '';
-        currentUsername.textContent = 'Chargement...';
-        currentPronouns.textContent = '';
-        userAvatar.src = 'https://api.dicebear.com/7.x/bottts/svg?seed=User';
-        messageInput.value = '';
-        messageInput.placeholder = 'Envoyer un message dans #général';
-        chatHeaderChannelName.textContent = 'général';
-        currentChannelId = 1; // Reset to default
-        currentChannelName = 'général';
+      loginTab.addEventListener('click', () => {
+        loginTab.classList.add('active');
+        registerTab.classList.remove('active');
+        loginPanel.classList.remove('hidden');
+        registerPanel.classList.add('hidden');
       });
 
-      // --- Socket.io Logic ---
-      socket.on('connect', () => {
-        console.log('Connected to Socket.io');
-        const token = localStorage.getItem('token');
-        if (token) {
-          socket.emit('auth', { token });
-        }
+      registerTab.addEventListener('click', () => {
+        registerTab.classList.add('active');
+        loginTab.classList.remove('active');
+        registerPanel.classList.remove('hidden');
+        loginPanel.classList.add('hidden');
       });
 
-      socket.on('auth-success', (user) => {
-        console.log('Auth successful:', user);
-        currentUserId = user.id;
-        authOverlay.classList.add('hidden');
-        appInterface.style.display = 'grid';
-        userAvatar.src = user.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(user.username)}`;
-        currentUsername.textContent = user.username;
-        currentPronouns.textContent = user.pronouns ? `(${user.pronouns})` : '';
+      // Initial state for auth tabs
+      loginTab.click();
 
-        // Fetch and display initial channels and members for the default server
-        fetchChannels(currentServerId);
-        fetchMembers(currentServerId);
-        socket.emit('join-channel', { channelId: currentChannelId });
-      });
-
-      socket.on('auth-error', (error) => {
-        console.error('Auth error:', error);
-        localStorage.removeItem('token');
-        authOverlay.classList.remove('hidden');
-        appInterface.style.display = 'none';
-        loginError.textContent = error.message || 'Session expirée. Veuillez vous reconnecter.';
-        loginTab.click(); // Switch to login tab
-      });
-
-      socket.on('channel-history', (messages) => {
-        messagesList.innerHTML = ''; // Clear previous messages
-        messages.reverse().forEach(msg => addMessageToChat(msg, true)); // Add oldest first
-        messagesList.scrollTop = messagesList.scrollHeight; // Scroll to bottom
-      });
-
-      socket.on('new-msg', (msg) => {
-        if (msg.channel_id === currentChannelId) {
-          addMessageToChat(msg);
-          messagesList.scrollTop = messagesList.scrollHeight; // Scroll to bottom
-        }
-      });
-
-      socket.on('user-status', ({ userId, status }) => {
-        const memberItem = membersListDiv.querySelector(`.member-item[data-user-id="${userId}"]`);
-        if (memberItem) {
-          const statusDot = memberItem.querySelector('.status-dot');
-          if (statusDot) {
-            statusDot.classList.toggle('online', status === 'online');
-            statusDot.classList.toggle('offline', status !== 'online');
-          }
-        }
-        const dmItem = dmListDiv.querySelector(`.dm-item[data-user-id="${userId}"]`);
-        if (dmItem) {
-          const statusDot = dmItem.querySelector('.status-dot');
-          if (statusDot) {
-            statusDot.classList.toggle('online', status === 'online');
-            statusDot.classList.toggle('offline', status !== 'online');
-          }
-        }
-      });
-
-      // --- Helper Functions ---
-      async function fetchChannels(serverId) {
-        try {
-          const token = localStorage.getItem('token');
-          const res = await fetch(`/api/servers/${serverId}/channels`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          const channels = await res.json();
-          renderChannels(channels);
-        } catch (error) {
-          console.error('Error fetching channels:', error);
-        }
-      }
-
-      function renderChannels(channels) {
-        channelListDiv.innerHTML = ''; // Clear existing channels
-        const textChannels = channels.filter(c => c.type === 'text');
-        const voiceChannels = channels.filter(c => c.type === 'voice');
-
-        if (textChannels.length > 0) {
-          const textCategory = document.createElement('div');
-          textCategory.className = 'channel-category';
-          textCategory.textContent = 'Canaux Texte';
-          channelListDiv.appendChild(textCategory);
-          textChannels.forEach(channel => {
-            const channelItem = document.createElement('div');
-            channelItem.className = `channel-item ${channel.id === currentChannelId ? 'active' : ''}`;
-            channelItem.dataset.channelId = channel.id;
-            channelItem.innerHTML = `
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-hash"><line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/><line x1="10" x2="8" y1="3" y2="21"/><line x1="16" x2="14" y1="3" y2="21"/></svg>
-              <span>${channel.name}</span>
-            `;
-            channelItem.addEventListener('click', () => joinChannel(channel.id, channel.name));
-            channelListDiv.appendChild(channelItem);
-          });
-        }
-
-        if (voiceChannels.length > 0) {
-          const voiceCategory = document.createElement('div');
-          voiceCategory.className = 'channel-category';
-          voiceCategory.textContent = 'Canaux Vocaux';
-          channelListDiv.appendChild(voiceCategory);
-          voiceChannels.forEach(channel => {
-            const channelItem = document.createElement('div');
-            channelItem.className = `channel-item ${channel.id === currentChannelId ? 'active' : ''}`;
-            channelItem.dataset.channelId = channel.id;
-            channelItem.innerHTML = `
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-volume-2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M23.31 1.69a16 16 0 0 1 0 22.62"/></svg>
-              <span>${channel.name}</span>
-            `;
-            channelItem.addEventListener('click', () => joinChannel(channel.id, channel.name));
-            channelListDiv.appendChild(channelItem);
-          });
-        }
-      }
-
-      function joinChannel(channelId, channelName) {
-        if (currentChannelId === channelId) return; // Already in this channel
-
-        // Update active state in UI
-        document.querySelectorAll('.channel-item').forEach(item => item.classList.remove('active'));
-        const newActiveChannel = document.querySelector(`.channel-item[data-channel-id="${channelId}"]`);
-        if (newActiveChannel) newActiveChannel.classList.add('active');
-
-        currentChannelId = channelId;
-        currentChannelName = channelName;
-        chatHeaderChannelName.textContent = channelName;
-        messageInput.placeholder = `Envoyer un message dans #${channelName}`;
-        messagesList.innerHTML = ''; // Clear messages for new channel
-        socket.emit('join-channel', { channelId });
-      }
-
-      async function fetchMembers(serverId) {
-        try {
-          const token = localStorage.getItem('token');
-          const res = await fetch(`/api/servers/${serverId}/members`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          const members = await res.json();
-          renderMembers(members);
-        } catch (error) {
-          console.error('Error fetching members:', error);
-        }
-      }
-
-      function renderMembers(members) {
-        membersListDiv.innerHTML = ''; // Clear existing members
-        members.forEach(member => {
-          const memberItem = document.createElement('div');
-          memberItem.className = 'member-item';
-          memberItem.dataset.userId = member.id;
-          memberItem.innerHTML = `
-            <div class="member-avatar">
-              <img src="${member.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(member.username)}`}" alt="${member.username} Avatar">
-              <span class="status-dot ${member.status === 'online' ? 'online' : 'offline'}"></span>
-            </div>
-            <span class="member-name">${member.username}</span>
-            ${member.pronouns ? `<span class="member-pronouns">(${member.pronouns})</span>` : ''}
-          `;
-          // DM functionality placeholder: clicking a member visually selects them for DM
-          memberItem.addEventListener('click', () => {
-            document.querySelectorAll('.member-item, .dm-item').forEach(item => item.classList.remove('active'));
-            memberItem.classList.add('active');
-            // In a real app, this would switch the chat area to a DM conversation
-            console.log(`DM with ${member.username} (User ID: ${member.id}) selected.`);
-            // For now, we just log and keep the channel chat active.
-            // To implement actual DMs, new Socket.io events and backend logic would be needed.
-          });
-          membersListDiv.appendChild(memberItem);
+      // Logout button logic
+      const logoutBtn = document.querySelector('.logout-btn');
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+          localStorage.removeItem('nexus_token');
+          currentUser = null;
+          token = null;
+          socket.disconnect(); // Disconnect and reconnect to clear session
+          socket.connect();
+          showAuth();
         });
-      }
-
-      function addMessageToChat(msg, prepend = false) {
-        const messageItem = document.createElement('div');
-        messageItem.className = 'message-item';
-        const date = new Date(msg.created_at);
-        const timeString = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-
-        messageItem.innerHTML = `
-          <img class="message-avatar" src="${msg.user_avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(msg.username)}`}" alt="${msg.username} Avatar">
-          <div class="message-content-wrapper">
-            <div class="message-author-info">
-              <span class="message-author">${msg.username}</span>
-              ${msg.user_pronouns ? `<span class="message-pronouns">(${msg.user_pronouns})</span>` : ''}
-              <span class="message-timestamp">${timeString}</span>
-            </div>
-            <div class="message-text">${msg.content}</div>
-          </div>
-        `;
-        if (prepend) {
-          messagesList.prepend(messageItem);
-        } else {
-          messagesList.appendChild(messageItem);
-        }
-      }
-
-      messageInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && messageInput.value.trim()) {
-          socket.emit('send-msg', { channelId: currentChannelId, content: messageInput.value.trim() });
-          messageInput.value = '';
-        }
-      });
-
-      // Initial check for token on load
-      const token = localStorage.getItem('token');
-      if (token) {
-        // If token exists, try to authenticate
-        socket.emit('auth', { token });
-      } else {
-        // No token, show auth overlay
-        authOverlay.classList.remove('hidden');
-        appInterface.style.display = 'none';
       }
     });
   </script>
