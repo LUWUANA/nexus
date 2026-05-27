@@ -148,7 +148,7 @@ const createChannel = db.prepare(`
 `);
 
 const getMessages = db.prepare(`
-  SELECT m.*, u.username, u.avatar
+  SELECT m.*, u.username, u.avatar, u.pronouns
   FROM messages m
   JOIN users u ON m.user_id = u.id
   WHERE m.channel_id = ?
